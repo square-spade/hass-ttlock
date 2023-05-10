@@ -35,7 +35,7 @@ class LockState:
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
-
+    auto_lock: bool | None = None
     auto_lock_seconds: int = -1
     passage_mode_config: PassageModeConfig | None = None
 
@@ -120,8 +120,12 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     new_data.locked = state.locked == State.locked
                 except Exception:
                     pass
-
+            
             new_data.auto_lock_seconds = details.autoLockTime
+            if new_data.auto_lock_seconds <= 0:
+                new_data.auto_lock = False
+            elif new_data.auto_lock_seconds > 0:
+                new_data.auto_lock = True   
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
