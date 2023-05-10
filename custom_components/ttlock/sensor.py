@@ -31,6 +31,7 @@ async def async_setup_entry(
                 LockBattery(coordinator),
                 LockOperator(coordinator),
                 LockTrigger(coordinator),
+                LockAutoLockTime(coordinato),
             )
         ]
     )
@@ -70,6 +71,40 @@ class LockOperator(BaseLockEntity, RestoreEntity, SensorEntity):
         self._attr_native_value = last_state.state
 
 
+class LockAutoLockTime(BaseLockEntity, RestoreEntity, SensorEntity):
+
+    """Representation of the auto lock time of a lock ."""
+
+    def _update_from_coordinator(self) -> None:
+
+        """Fetch state from the device."""
+
+        self._attr_name = f"{self.coordinator.data.name} Auto Lock Time"
+
+        if self.coordinator.data.auto_lock_time:
+
+            if self.coordinator.data.auto_lock_time <= 0:
+                self._attr_native_value = 0
+  
+            self._attr_native_value = self.coordinator.data.auto_lock_time
+
+        elif not self._attr_native_value:
+
+            self._attr_native_value = "Unknown"
+
+    async def async_added_to_hass(self) -> None:
+
+        """Restore on startup since we don't have event history."""
+
+        await super().async_added_to_hass()
+
+        last_state = await self.async_get_last_state()
+
+        if not last_state or last_state.state == STATE_UNAVAILABLE:
+
+            return
+
+        self._attr_native_value = last_state.state       
 class LockTrigger(BaseLockEntity, RestoreEntity, SensorEntity):
     """Representation of a locks state change reason."""
 
