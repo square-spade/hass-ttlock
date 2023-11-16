@@ -12,7 +12,7 @@ from aiohttp import ClientSession
 from homeassistant.components.application_credentials import AuthImplementation
 from homeassistant.helpers import config_entry_oauth2_flow
 
-from .models import Lock, LockState, PassageModeConfig
+from .models import Lock, LockState, PassageModeConfig, AutoLockConfig
 
 _LOGGER = logging.getLogger(__name__)
 GW_LOCK = asyncio.Lock()
@@ -123,6 +123,23 @@ class TTLockApi:
         res = await self.get("lock/getPassageModeConfig", lockId=lock_id)
         return PassageModeConfig.parse_obj(res)
 
+    async def set_lock_autolock_config(self, lock_id: int, config: AutoLockConfig) -> bool:
+        """ Set the autolock configuration of the lock"""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/setAutoLockTime",
+                lockId=lock_id,
+                type=2,  # via gateway
+                seconds=10 if config.autolock else -1
+            )
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error("Failed to unlock %s: %s", lock_id, res["errmsg"])
+            return False
+
+        return True
+
     async def lock(self, lock_id: int) -> bool:
         """Try to lock the lock."""
         async with GW_LOCK:
@@ -138,6 +155,28 @@ class TTLockApi:
         """Try to unlock the lock."""
         async with GW_LOCK:
             res = await self.get("lock/unlock", lockId=lock_id)
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error("Failed to unlock %s: %s", lock_id, res["errmsg"])
+            return False
+
+        return True
+
+    async def set_passage_mode(self, lock_id: int, config: PassageModeConfig) -> bool:
+        """Configure passage mode."""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/configPassageMode",
+                lockId=lock_id,
+                type=2,  # via gateway
+                passageMode=1 if config.enabled else 2,
+                autoUnlock=1 if config.auto_unlock else 2,
+                isAllDay=1 if config.all_day else 2,
+                startDate=config.start_minute,
+                endDate=config.end_minute,
+                weekDays=json.dumps(config.week_days),
+            )
 
         if "errcode" in res and res["errcode"] != 0:
             _LOGGER.error("Failed to unlock %s: %s", lock_id, res["errmsg"])
