@@ -64,7 +64,7 @@ class Lock(BaseModel):
     model: str | None = Field(None, alias="modelNum")
     hardwareRevision: str | None = None
     firmwareRevision: str | None = None
-    autoLockTime: int = -1
+    autoLockTime: int = Field(..., alias="autoLock")
     lockSound: OnOff = OnOff.unknown
     privacyLock: OnOff = OnOff.unknown
     tamperAlert: OnOff = OnOff.unknown
@@ -94,7 +94,11 @@ class PassageModeConfig(BaseModel):
     week_days: list[int] = Field([], alias="weekDays")  # monday = 1, sunday = 7
     auto_unlock: OnOff = Field(OnOff.unknown, alias="autoUnlock")
 
+class AutoLockConfig(BaseModel):
+    """ The autolock config"""
 
+    seconds: int = Field(0, alias="autoLock")
+    
 class Action(Enum):
     """Lock action from an event."""
 
