@@ -94,11 +94,13 @@ class PassageModeConfig(BaseModel):
     week_days: list[int] = Field([], alias="weekDays")  # monday = 1, sunday = 7
     auto_unlock: OnOff = Field(OnOff.unknown, alias="autoUnlock")
 
+
 class AutoLockConfig(BaseModel):
     """ The autolock config"""
 
     seconds: int = Field(0, alias="autoLock")
     
+
 class Action(Enum):
     """Lock action from an event."""
 
