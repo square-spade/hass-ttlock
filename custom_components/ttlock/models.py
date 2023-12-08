@@ -64,7 +64,7 @@ class Lock(BaseModel):
     model: str | None = Field(None, alias="modelNum")
     hardwareRevision: str | None = None
     firmwareRevision: str | None = None
-    autoLockTime: int = -1
+    autoLockTime: int = Field(..., alias="autoLock")
     lockSound: OnOff = OnOff.unknown
     privacyLock: OnOff = OnOff.unknown
     tamperAlert: OnOff = OnOff.unknown
@@ -102,6 +102,12 @@ class PassageModeConfig(BaseModel):
     def _set_end_minute(cls, end_minute: int | None) -> int:
         return end_minute or 0
 
+
+class AutoLockConfig(BaseModel):
+    """ The autolock config"""
+
+    seconds: int = Field(0, alias="autoLock")
+    
 
 class Action(Enum):
     """Lock action from an event."""

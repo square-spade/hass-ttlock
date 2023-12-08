@@ -37,7 +37,8 @@ from .coordinator import LockUpdateCoordinator
 from .models import WebhookEvent
 from .services import Services
 
-PLATFORMS: list[Platform] = [Platform.LOCK, Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS: list[Platform] = [Platform.LOCK, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
+
 
 _LOGGER = logging.getLogger(__name__)
 
