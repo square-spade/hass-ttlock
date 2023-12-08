@@ -12,7 +12,7 @@ from aiohttp import ClientSession
 from homeassistant.components.application_credentials import AuthImplementation
 from homeassistant.helpers import config_entry_oauth2_flow
 
-from .models import Lock, LockState, PassageModeConfig, AutoLockConfig
+from .models import Features, Lock, LockState, PassageModeConfig, AutoLockConfig
 
 _LOGGER = logging.getLogger(__name__)
 GW_LOCK = asyncio.Lock()
