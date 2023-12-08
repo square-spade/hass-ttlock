@@ -35,10 +35,20 @@ from .const import (
 )
 from .coordinator import LockUpdateCoordinator
 from .models import WebhookEvent
+from .services import Services
 
 PLATFORMS: list[Platform] = [Platform.LOCK, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
 
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def setup(hass: HomeAssistant, config: ConfigEntry) -> bool:
+    """Set up the TTLock component."""
+
+    Services(hass).register()
+
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

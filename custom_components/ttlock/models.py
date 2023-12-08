@@ -2,9 +2,9 @@
 
 from collections import namedtuple
 from datetime import datetime
-from enum import Enum, auto
+from enum import Enum, IntFlag, auto
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from homeassistant.util.dt import as_local, utc_from_timestamp
 
@@ -93,6 +93,14 @@ class PassageModeConfig(BaseModel):
     all_day: OnOff = Field(OnOff.unknown, alias="isAllDay")
     week_days: list[int] = Field([], alias="weekDays")  # monday = 1, sunday = 7
     auto_unlock: OnOff = Field(OnOff.unknown, alias="autoUnlock")
+
+    @validator("start_minute", pre=True, always=True)
+    def _set_start_minute(cls, start_minute: int | None) -> int:
+        return start_minute or 0
+
+    @validator("end_minute", pre=True, always=True)
+    def _set_end_minute(cls, end_minute: int | None) -> int:
+        return end_minute or 0
 
 
 class AutoLockConfig(BaseModel):
@@ -227,3 +235,19 @@ class WebhookEvent(BaseModel):
             return LockState(state=State.unlocked)
 
         return LockState(state=None)
+
+
+class Features(IntFlag):
+    """Parses the features bitmask from the hex string in the api response."""
+
+    # Docs: https://euopen.ttlock.com/document/doc?urlName=cloud%2Flock%2FfeatureValueEn.html.
+
+    lock_remotely = 2**8
+    unlock_via_gateway = 2**10
+    passage_mode = 2**22
+    wifi = 2**56
+
+    @classmethod
+    def from_feature_value(cls, value: str | None):
+        """Parse the hex feature_value string."""
+        return Features(int(value, 16)) if value else Features(0)

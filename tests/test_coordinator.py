@@ -28,6 +28,7 @@ async def test_coordinator_loads_data(
     assert coordinator.data.action_pending is False
     assert coordinator.data.last_user is None
     assert coordinator.data.last_reason is None
+    assert coordinator.data.features is not None
 
 
 @pytest.fixture(params=[{"auto_lock_seconds": 30}])
@@ -41,12 +42,39 @@ def lock_state(request):
 
 def ts(time: str = "now"):
     return dateparser.parse(time)
-    if ts:
-        ts.replace(tzinfo=None)
-    return ts
 
 
 class TestLockState:
+    class TestPassageModeActive:
+        @pytest.mark.parametrize(
+            "time",
+            [
+                "6am on Sunday",
+                "10am on Wednesday",
+                "5:59pm on Friday",
+            ],
+        )
+        def test_is_true_during_set_passage_mode_times(self, lock_state, time):
+            lock_state.passage_mode_config = PassageModeConfig.parse_obj(
+                PASSAGE_MODE_6_TO_6_7_DAYS
+            )
+            assert lock_state.passage_mode_active(ts(time)) is True
+
+        @pytest.mark.parametrize(
+            "time",
+            [
+                "Midnight on Monday",
+                "5:59am on Tuesday",
+                "6pm on Thursday",
+                "11:59pm on Sunday",
+            ],
+        )
+        def test_is_false_outside_set_passage_mode_times(self, lock_state, time):
+            lock_state.passage_mode_config = PassageModeConfig.parse_obj(
+                PASSAGE_MODE_6_TO_6_7_DAYS
+            )
+            assert lock_state.passage_mode_active(ts(time)) is False
+
     class TestAutoLockDelay:
         @pytest.mark.parametrize(
             "lock_state", [{"auto_lock_seconds": -1}], indirect=True

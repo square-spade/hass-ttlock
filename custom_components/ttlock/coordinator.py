@@ -13,10 +13,11 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import PassageModeConfig, State, WebhookEvent
+from .models import Features, PassageModeConfig, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class LockState:
     battery_level: int | None = None
     hardware_version: str | None = None
     firmware_version: str | None = None
+    features: Features | None = None
     locked: bool | None = None
     action_pending: bool = False
     last_user: str | None = None
@@ -39,18 +41,14 @@ class LockState:
     auto_lock_seconds: int = -1
     passage_mode_config: PassageModeConfig | None = None
 
-    def auto_lock_delay(self, current_date: datetime) -> int | None:
-        """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
-        if self.auto_lock_seconds <= 0:
-            return None
-
+    def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
+        """Check if passage mode is currently active."""
         if self.passage_mode_config and self.passage_mode_config.enabled:
             current_day = current_date.isoweekday()
 
             if current_day in self.passage_mode_config.week_days:
                 if self.passage_mode_config.all_day:
-                    # All day, today -> no auto-lock
-                    return None
+                    return True
 
                 current_minute = current_date.hour * 60 + current_date.minute
                 if (
@@ -58,8 +56,18 @@ class LockState:
                     <= current_minute
                     < self.passage_mode_config.end_minute
                 ):
-                    # In passage mode, today -> no auto-lock
-                    return None
+                    # Active by schedule
+                    return True
+        return False
+
+    def auto_lock_delay(self, current_date: datetime) -> int | None:
+        """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
+        if self.auto_lock_seconds <= 0:
+            return None
+
+        if self.passage_mode_active(current_date):
+            return None
+
         return self.auto_lock_seconds
 
 
@@ -84,6 +92,18 @@ def lock_coordinators(hass: HomeAssistant, entry: ConfigEntry):
     yield from coordinators
 
 
+def coordinator_for(
+    hass: HomeAssistant, entity_id: str
+) -> LockUpdateCoordinator | None:
+    """Given an entity_id, return the coordinator for that entity."""
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        for coordinator in lock_coordinators(hass, entry):
+            for entity in coordinator.entities:
+                if entity.entity_id == entity_id:
+                    return coordinator
+    return None
+
+
 class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
     """Class to manage fetching Toon data from single endpoint."""
 
@@ -106,6 +126,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 name=details.name,
                 mac=details.mac,
                 model=details.model,
+                features=Features.from_feature_value(details.featureValue),
             )
 
             # update mutable attributes
@@ -143,6 +164,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         _LOGGER.debug("Lock %s received %s", self.unique_id, event)
 
         if not event.success:
+            return
+
+        if not self.data:
             return
 
         new_data = deepcopy(self.data)
@@ -201,16 +225,23 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             hw_version=self.data.hardware_version,
         )
 
+    @property
+    def entities(self) -> list[Entity]:
+        """Entities belonging to this co-ordinator."""
+        return [
+            callback.__self__
+            for callback, _ in list(self._listeners.values())
+            if isinstance(callback.__self__, Entity)
+        ]
+
     def as_dict(self) -> dict:
         """Serialize for diagnostics."""
-        entities = [callback.__self__ for callback, _ in list(self._listeners.values())]
         return {
             "unique_id": self.unique_id,
             "device": asdict(self.data),
             "entities": [
                 self.hass.states.get(entity.entity_id).as_dict()
-                for entity in entities
-                if isinstance(entity, Entity)
+                for entity in self.entities
             ],
         }
 
