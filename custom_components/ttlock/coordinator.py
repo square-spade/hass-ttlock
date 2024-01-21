@@ -141,7 +141,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     new_data.locked = state.locked == State.locked
                 except Exception:
                     pass
-
+            new_data.door_sensor_on = details.door_sensor_on
             new_data.auto_lock_seconds = details.autoLockTime
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
@@ -167,7 +167,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
         new_data = deepcopy(self.data)
         new_data.battery_level = event.battery_level
-
+        new_data.door_sensor_on = event.door_sensor_on
         if state := event.state:
             if state.locked == State.locked:
                 new_data.locked = True
