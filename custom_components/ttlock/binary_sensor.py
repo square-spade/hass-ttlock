@@ -37,7 +37,7 @@ class DoorSensor(BaseLockEntity, BinarySensorEntity):
     def _update_from_coordinator(self) -> None:
         """Fetch state from the device."""
         self._attr_name = f"{self.coordinator.data.name}"
-        self._attr_is_on = self.coordinator.data.door_sensor_on()
+        self._attr_is_on = self.coordinator.data.door_sensor_open()
 
 class PassageMode(BaseLockEntity, BinarySensorEntity):
     """Current passage mode state."""
