@@ -83,7 +83,9 @@ class LockState(BaseModel):
 
     locked: State | None = Field(State.unknown, alias="state")
 
-
+class DoorSensor(BaseModel):
+    """Door Sensor"""
+    
 class PassageModeConfig(BaseModel):
     """The passage mode configuration of the lock."""
 
@@ -146,7 +148,8 @@ class Action(Enum):
     unknown = auto()
     lock = auto()
     unlock = auto()
-
+    open = auto()
+    closed = auto()
 
 EventDescription = namedtuple("EventDescription", ["action", "description"])
 
@@ -168,8 +171,8 @@ class Event:
         11: EventDescription(Action.lock, "lock by app"),
         12: EventDescription(Action.unlock, "unlock by gateway"),
         29: EventDescription(Action.unknown, "apply some force on the Lock"),
-        30: EventDescription(Action.unknown, "Door sensor closed"),
-        31: EventDescription(Action.unknown, "Door sensor open"),
+        30: EventDescription(Action.closed, "Door sensor closed"),
+        31: EventDescription(Action.open, "Door sensor open"),
         32: EventDescription(Action.unknown, "open from inside"),
         33: EventDescription(Action.lock, "lock by fingerprint"),
         34: EventDescription(Action.lock, "lock by passcode"),
