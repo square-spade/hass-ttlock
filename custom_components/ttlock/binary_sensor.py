@@ -25,8 +25,10 @@ async def async_setup_entry(
         [
             entity
             for coordinator in lock_coordinators(hass, entry)
-            for entity in (PassageMode(coordinator)
-            for entity in (DoorSensor(coordinator),) 
+            for entity in (
+                PassageMode(coordinator),
+                DoorSensor(coordinator)
+            ) 
         ]
          
     )
