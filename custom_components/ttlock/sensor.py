@@ -104,7 +104,9 @@ class LockAutoLockTime(BaseLockEntity, RestoreEntity, SensorEntity):
 
             return
 
-        self._attr_native_value = last_state.state       
+        self._attr_native_value = last_state.state
+        
+              
 class LockTrigger(BaseLockEntity, RestoreEntity, SensorEntity):
     """Representation of a locks state change reason."""
 

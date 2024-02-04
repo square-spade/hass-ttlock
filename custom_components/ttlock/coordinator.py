@@ -63,7 +63,7 @@ class LockState:
     def auto_lock_delay(self, current_date: datetime) -> int | None:
         """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
         if self.auto_lock_seconds <= 0:
-            return None
+            return 0
 
         if self.passage_mode_active(current_date):
             return None

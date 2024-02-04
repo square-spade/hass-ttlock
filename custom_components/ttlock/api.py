@@ -15,7 +15,7 @@ from homeassistant.components.application_credentials import AuthImplementation
 from homeassistant.helpers import config_entry_oauth2_flow
 
 
-from .models import Features, Lock, LockState, PassageModeConfig, AutoLockConfig
+from .models import Features, Lock, LockState, PassageModeConfig, AutoLockConfig, SensorState
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -156,6 +156,12 @@ class TTLockApi:
         async with GW_LOCK:
             res = await self.get("lock/queryOpenState", lockId=lock_id)
         return LockState.parse_obj(res)
+    
+    async def get_sensor_state(self, lock_id: int) -> SensorState:
+        """Get the state of a sensor."""
+        async with GW_LOCK:
+            res = await self.get("lock/queryOpenState", lockId=lock_id)
+        return SensorState.parse_obj(res)
 
     async def get_lock_passage_mode_config(self, lock_id: int) -> PassageModeConfig:
         """Get the passage mode configuration of a lock."""
