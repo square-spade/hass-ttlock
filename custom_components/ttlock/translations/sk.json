@@ -28,9 +28,8 @@
   },
   "issues": {
     "no_webhook_url": {
-      "description": "Pri pokuse o vygenerovanie webovej adresy webhooku sa vyskytla chyba. Uistite sa, že máte nakonfigurovanú adresu URL v Settings > System > Network.",
+      "description": "Pri pokuse o vygenerovanie webovej adresy webhooku sa vyskytla chyba. Uistite sa, že máte nakonfigurovanú adresu URLSettings > System > Network.",
       "title": "Nie je možné vygenerovať webovú adresu webhooku."
     }
-
   }
 }
