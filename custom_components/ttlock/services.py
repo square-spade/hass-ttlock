@@ -74,7 +74,7 @@ class Services:
             ),
         )
 
-        self.hass.services.async_register(
+        self.hass.services.register(
             DOMAIN,
             SVC_CLEANUP_PASSCODES,
             self.handle_cleanup_passcodes,
