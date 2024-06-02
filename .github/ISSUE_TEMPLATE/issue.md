@@ -5,6 +5,7 @@ title: ""
 labels: ""
 assignees: jbergler
 ---
+
 <!--- Bug reports which do not follow this template will be closed -->
 
 ## Describe the bug
@@ -25,6 +26,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 ## Required information
+
 <!---
 Note: if this information is not provided, the issue will likely be closed without investigation as I am unable to make progress.
 Documentation for how to gather this information is found at https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging
