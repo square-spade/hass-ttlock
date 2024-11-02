@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field, validator
 
 from homeassistant.util import dt
 
-
 class EpochMs(datetime):
     """Parse millisecond epoch into a local datetime."""
 
@@ -50,6 +49,12 @@ class State(Enum):
     unlocked = 1
     unknown = 2
 
+class SensorState(Enum):
+    """Open State of the Door"""
+
+    opened = 0
+    closed = 1
+    unknown = 2
 
 class Lock(BaseModel):
     """Lock details."""
@@ -64,7 +69,8 @@ class Lock(BaseModel):
     model: str | None = Field(None, alias="modelNum")
     hardwareRevision: str | None = None
     firmwareRevision: str | None = None
-    autoLockTime: int = -1
+    autoLockTime: int = Field(..., alias="autoLock")
+    door_sensor: OnOff | None = Field(None, alias="sensorState")
     lockSound: OnOff = OnOff.unknown
     privacyLock: OnOff = OnOff.unknown
     tamperAlert: OnOff = OnOff.unknown
@@ -83,9 +89,13 @@ class LockState(BaseModel):
 
     locked: State | None = Field(State.unknown, alias="state")
 
-class DoorSensor(BaseModel):
-    """Door Sensor"""
-    
+
+class DoorState(BaseModel):
+    """Door State"""
+
+    open: SensorState | None = Field(SensorState.unknown, alias="sensorState")
+
+
 class PassageModeConfig(BaseModel):
     """The passage mode configuration of the lock."""
 
@@ -150,6 +160,7 @@ class Action(Enum):
     unlock = auto()
     open = auto()
     closed = auto()
+
 
 EventDescription = namedtuple("EventDescription", ["action", "description"])
 
@@ -270,6 +281,15 @@ class WebhookEvent(BaseModel):
 
         return LockState(state=None)
 
+    @property
+    def sensorState(self) -> SensorState:
+        """The State of the door"""
+        if self.success and self.event.action == Action.open:
+            return SensorState(sensorState=State.open)
+        elif self.success and self.event.action == Action.closed:
+            return SensorState(sensorState=State.closed)
+
+        return SensorState(state=None)
 
 class Features(IntFlag):
     """Parses the features bitmask from the hex string in the api response."""

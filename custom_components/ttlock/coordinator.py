@@ -37,7 +37,7 @@ class LockState:
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
-
+    auto_lock: bool | None = None
     auto_lock_seconds: int = -1
     passage_mode_config: PassageModeConfig | None = None
 
@@ -63,7 +63,7 @@ class LockState:
     def auto_lock_delay(self, current_date: datetime) -> int | None:
         """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
         if self.auto_lock_seconds <= 0:
-            return None
+            return 0
 
         if self.passage_mode_active(current_date):
             return None
@@ -141,8 +141,12 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     new_data.locked = state.locked == State.locked
                 except Exception:
                     pass
-            new_data.door_sensor_on = details.door_sensor_on
+
             new_data.auto_lock_seconds = details.autoLockTime
+            if new_data.auto_lock_seconds <= 0:
+                new_data.auto_lock = False
+            elif new_data.auto_lock_seconds > 0:
+                new_data.auto_lock = True   
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
@@ -167,18 +171,18 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
         new_data = deepcopy(self.data)
         new_data.battery_level = event.battery_level
-        new_data.door_sensor_on = event.door_sensor_on
         if state := event.state:
             if state.locked == State.locked:
                 new_data.locked = True
             elif state.locked == State.unlocked:
                 new_data.locked = False
                 self._handle_auto_lock(event.lock_ts, event.server_ts)
-
+            
             if state.locked is not None:
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
-
+        if sensorState := event.sensorState:
+            
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
