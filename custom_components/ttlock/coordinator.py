@@ -141,7 +141,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     new_data.locked = state.locked == State.locked
                 except Exception:
                     pass
-            
+
             new_data.auto_lock_seconds = details.autoLockTime
             if new_data.auto_lock_seconds <= 0:
                 new_data.auto_lock = False
@@ -171,18 +171,18 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
         new_data = deepcopy(self.data)
         new_data.battery_level = event.battery_level
-
         if state := event.state:
             if state.locked == State.locked:
                 new_data.locked = True
             elif state.locked == State.unlocked:
                 new_data.locked = False
                 self._handle_auto_lock(event.lock_ts, event.server_ts)
-
+            
             if state.locked is not None:
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
-
+        if sensorState := event.sensorState:
+            
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):

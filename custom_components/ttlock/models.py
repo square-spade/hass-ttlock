@@ -2,12 +2,11 @@
 
 from collections import namedtuple
 from datetime import datetime
-from enum import Enum, IntFlag, auto
+from enum import Enum, IntEnum, IntFlag, auto
 
 from pydantic import BaseModel, Field, validator
 
-from homeassistant.util.dt import as_local, utc_from_timestamp
-
+from homeassistant.util import dt
 
 class EpochMs(datetime):
     """Parse millisecond epoch into a local datetime."""
@@ -20,7 +19,7 @@ class EpochMs(datetime):
     @classmethod
     def validate(cls, v):
         """Use homeassistant time helpers to parse epoch."""
-        return as_local(utc_from_timestamp(v / 1000))
+        return dt.as_local(dt.utc_from_timestamp(v / 1000))
 
 
 class OnOff(Enum):
@@ -50,7 +49,7 @@ class State(Enum):
     unlocked = 1
     unknown = 2
 
-class OpenState(Enum):
+class SensorState(Enum):
     """Open State of the Door"""
 
     opened = 0
@@ -90,10 +89,12 @@ class LockState(BaseModel):
 
     locked: State | None = Field(State.unknown, alias="state")
 
-class SensorState(BaseModel):
+
+class DoorState(BaseModel):
     """Door State"""
 
-    opened: OpenState | None = Field(OpenState.unknown, alias="sensorState")
+    open: SensorState | None = Field(SensorState.unknown, alias="sensorState")
+
 
 class PassageModeConfig(BaseModel):
     """The passage mode configuration of the lock."""
@@ -114,11 +115,42 @@ class PassageModeConfig(BaseModel):
         return end_minute or 0
 
 
-class AutoLockConfig(BaseModel):
-    """ The autolock config"""
+class PasscodeType(IntEnum):
+    """Type of passcode."""
 
-    seconds: int = Field(0, alias="autoLock")
-    
+    unknown = 0
+    permanent = 2
+    temporary = 3
+
+
+class Passcode(BaseModel):
+    """A single passcode on a lock."""
+
+    id: int = Field(None, alias="keyboardPwdId")
+    passcode: str = Field(None, alias="keyboardPwd")
+    name: str = Field(None, alias="keyboardPwdName")
+    type: PasscodeType = Field(None, alias="keyboardPwdType")
+    start_date: EpochMs = Field(None, alias="startDate")
+    end_date: EpochMs = Field(None, alias="endDate")
+
+    @property
+    def expired(self) -> bool:
+        """True if the passcode expired."""
+        if self.type == PasscodeType.temporary:
+            return self.end_date < dt.now()
+
+        # Assume not
+        return False
+
+
+class AddPasscodeConfig(BaseModel):
+    """The passcode creation configuration."""
+
+    passcode: str = Field(None, alias="passcode")
+    passcode_name: str = Field(None, alias="passcodeName")
+    start_minute: int = Field(0, alias="startDate")
+    end_minute: int = Field(0, alias="endDate")
+
 
 class Action(Enum):
     """Lock action from an event."""
@@ -250,7 +282,7 @@ class WebhookEvent(BaseModel):
         return LockState(state=None)
 
     @property
-    def sensorState(self) ->SensorState:
+    def sensorState(self) -> SensorState:
         """The State of the door"""
         if self.success and self.event.action == Action.open:
             return SensorState(sensorState=State.open)
