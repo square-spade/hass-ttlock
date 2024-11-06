@@ -17,7 +17,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, PassageModeConfig, State, WebhookEvent
+from .models import Features, PassageModeConfig, State, SensorState, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,11 +34,12 @@ class LockState:
     firmware_version: str | None = None
     features: Features | None = None
     locked: bool | None = None
+    closed: bool | None = None
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
     auto_lock: bool | None = None
-    auto_lock_seconds: int = -1
+    auto_lock_seconds: int | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -63,7 +64,7 @@ class LockState:
     def auto_lock_delay(self, current_date: datetime) -> int | None:
         """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
         if self.auto_lock_seconds <= 0:
-            return 0
+            return None
 
         if self.passage_mode_active(current_date):
             return None
@@ -139,11 +140,12 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
+                    sensorState = await self.api.get_sensor_state(self.lock_id)
                 except Exception:
                     pass
-
-            new_data.auto_lock_seconds = details.autoLockTime
-            if new_data.auto_lock_seconds <= 0:
+            
+            new_data.auto_lock_delay = details.autoLockTime
+            if new_data.auto_lock_delay <= 0:
                 new_data.auto_lock = False
             elif new_data.auto_lock_seconds > 0:
                 new_data.auto_lock = True   

@@ -22,8 +22,7 @@ from .models import (
     LockState,
     PassageModeConfig,
     Passcode,
-    AutoLockConfig, 
-    SensorState,
+    AutoLockConfig,
 )
 
 
@@ -166,18 +165,18 @@ class TTLockApi:
             res = await self.get("lock/queryOpenState", lockId=lock_id)
         return LockState.parse_obj(res)
     
-    async def get_sensor_state(self, lock_id: int) -> SensorState:
-        """Get the state of a sensor."""
-        async with GW_LOCK:
-            res = await self.get("lock/queryOpenState", lockId=lock_id)
-        return SensorState.parse_obj(res)
+    # async def get_sensor_state(self, lock_id: int) -> LockState:
+    #     """Get the state of a sensor."""
+    #     async with GW_LOCK:
+    #         res = await self.get("lock/queryOpenState", lockId=lock_id)
+    #     return LockState.parse_obj(res['sensorState'])
 
     async def get_lock_passage_mode_config(self, lock_id: int) -> PassageModeConfig:
         """Get the passage mode configuration of a lock."""
         res = await self.get("lock/getPassageModeConfig", lockId=lock_id)
         return PassageModeConfig.parse_obj(res)
 
-    async def set_lock_autolock_config(self, lock_id: int, config: AutoLockConfig) -> bool:
+    async def get_lock_autolock_config(self, lock_id: int) -> bool:
         """ Set the autolock configuration of the lock"""
 
         async with GW_LOCK:

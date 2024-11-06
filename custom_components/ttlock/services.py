@@ -21,10 +21,12 @@ from .const import (
     CONF_END_TIME,
     CONF_START_TIME,
     CONF_WEEK_DAYS,
+    CONF_AUTOLOCK_SECONDS,
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
     SVC_CONFIG_PASSAGE_MODE,
     SVC_CREATE_PASSCODE,
+    SVC_AUTOLOCK,
 )
 from .coordinator import LockUpdateCoordinator, coordinator_for
 from .models import AddPasscodeConfig, OnOff, PassageModeConfig
@@ -70,6 +72,19 @@ class Services:
                     vol.Required("passcode"): cv.string,
                     vol.Required("start_time", default=time()): cv.datetime,
                     vol.Required("end_time", default=time()): cv.datetime,
+                }
+            ),
+        )
+
+        self.hass.services.register(
+            DOMAIN,
+            SVC_AUTOLOCK,
+            self.handle_autolock,
+            vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                    vol.Required(CONF_ENABLED): cv.boolean,
+                    vol.Required("autolock_seconds"): cv.string,
                 }
             ),
         )
@@ -153,3 +168,19 @@ class Services:
                     removed.append(code.name)
 
         return {"removed": removed}
+
+       async def handle_autolock(self, call: ServiceCall):
+        """Enable passage mode for the given entities."""
+        start_time = call.data.get(CONF_START_TIME)
+        end_time = call.data.get(CONF_END_TIME)
+   
+        config = AutoLockConfig(
+            passageMode=OnOff.on if call.data.get(CONF_ENABLED) else OnOff.off,
+            autoUnlock=OnOff.on if call.data.get(CONF_AUTO_UNLOCK) else OnOff.off,
+            isAllDay=OnOff.on if call.data.get(CONF_ALL_DAY) else OnOff.off,
+        )
+
+        for coordinator in self._get_coordinators(call):
+            if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
+                coordinator.data.passage_mode_config = config
+                coordinator.async_update_listeners()

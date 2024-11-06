@@ -33,7 +33,6 @@ class OnOff(Enum):
         """Overload truthyness to 'on'."""
         return self == OnOff.on
 
-
 class OpenDirection(Enum):
     """Tri-state for door open direction."""
 
@@ -50,9 +49,9 @@ class State(Enum):
     unknown = 2
 
 class SensorState(Enum):
-    """Open State of the Door"""
+    """State of the Door Sensor"""
 
-    opened = 0
+    open = 0
     closed = 1
     unknown = 2
 
@@ -69,8 +68,7 @@ class Lock(BaseModel):
     model: str | None = Field(None, alias="modelNum")
     hardwareRevision: str | None = None
     firmwareRevision: str | None = None
-    autoLockTime: int = Field(..., alias="autoLock")
-    door_sensor: OnOff | None = Field(None, alias="sensorState")
+    autoLockTime: int | None = None
     lockSound: OnOff = OnOff.unknown
     privacyLock: OnOff = OnOff.unknown
     tamperAlert: OnOff = OnOff.unknown
@@ -88,12 +86,7 @@ class LockState(BaseModel):
     """Lock state."""
 
     locked: State | None = Field(State.unknown, alias="state")
-
-
-class DoorState(BaseModel):
-    """Door State"""
-
-    open: SensorState | None = Field(SensorState.unknown, alias="sensorState")
+    closed: SensorState | None = Field(SensorState.unknown, alias="sensorState")
 
 
 class PassageModeConfig(BaseModel):
@@ -114,7 +107,10 @@ class PassageModeConfig(BaseModel):
     def _set_end_minute(cls, end_minute: int | None) -> int:
         return end_minute or 0
 
+class AutoLockConfig(basemodel):
+    """The autolock config of the lock"""
 
+    enabled: bool
 class PasscodeType(IntEnum):
     """Type of passcode."""
 
@@ -282,24 +278,27 @@ class WebhookEvent(BaseModel):
         return LockState(state=None)
 
     @property
-    def sensorState(self) -> SensorState:
+    def sensorState(self) -> LockState:
         """The State of the door"""
         if self.success and self.event.action == Action.open:
-            return SensorState(sensorState=State.open)
+            return LockState(sensorState=SensorState.open)
         elif self.success and self.event.action == Action.closed:
-            return SensorState(sensorState=State.closed)
+            return LockState(sensorState=SensorState.closed)
 
-        return SensorState(state=None)
+        return LockState(sensorState=None)
 
 class Features(IntFlag):
     """Parses the features bitmask from the hex string in the api response."""
 
     # Docs: https://euopen.ttlock.com/document/doc?urlName=cloud%2Flock%2FfeatureValueEn.html.
 
+    auto_lock = 2**4
     lock_remotely = 2**8
     unlock_via_gateway = 2**10
+    door_sensor = 2** 13
     passage_mode = 2**22
     wifi = 2**56
+
 
     @classmethod
     def from_feature_value(cls, value: str | None):
