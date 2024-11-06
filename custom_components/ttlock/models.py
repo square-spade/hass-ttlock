@@ -103,12 +103,6 @@ class PassageModeConfig(BaseModel):
         return end_minute or 0
 
 
-class AutoLockConfig(BaseModel):
-    """ The autolock config"""
-
-    seconds: int = Field(0, alias="autoLock")
-    
-
 class Action(Enum):
     """Lock action from an event."""
 

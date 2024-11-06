@@ -170,7 +170,7 @@ class TTLockApi:
                 "lock/setAutoLockTime",
                 lockId=lock_id,
                 type=2,  # via gateway
-                seconds=10 if config.autolock else -1
+                seconds=config.autolock_seconds if config.enabled else 0,
             )
 
         if "errcode" in res and res["errcode"] != 0:

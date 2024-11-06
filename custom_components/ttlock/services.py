@@ -15,10 +15,11 @@ from .const import (
     CONF_END_TIME,
     CONF_START_TIME,
     CONF_WEEK_DAYS,
+    CONF_AUTOLOCK_SECONDS,
     DOMAIN,
 )
 from .coordinator import LockUpdateCoordinator, coordinator_for
-from .models import OnOff, PassageModeConfig
+from .models import OnOff, PassageModeConfig, AutoLockConfig
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +47,18 @@ class Services:
                     vol.Optional(CONF_START_TIME, default=time()): cv.time,
                     vol.Optional(CONF_END_TIME, default=time()): cv.time,
                     vol.Optional(CONF_WEEK_DAYS, default=WEEKDAYS): cv.weekdays,
+                }
+            ),
+        )
+        self.hass.services.register(
+            DOMAIN,
+            "configure_autolock",
+            self.handle_autolock_config,
+            vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                    vol.Required(CONF_ENABLED): cv.boolean,
+                    vol.Optionl(CONF_AUTOLOCK_SECONDS, default=10): cv.int,
                 }
             ),
         )
@@ -80,4 +93,18 @@ class Services:
         for coordinator in self._get_coordinators(call):
             if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
                 coordinator.data.passage_mode_config = config
+                coordinator.async_update_listeners()
+
+    async def handle_autolock_config(self, call: ServiceCall):
+        """Configure Autolock time"""
+        
+        
+        config = AutoLockConfig(
+            seconds = call.data.get(CONF_AUTOLOCK_SECONDS) if call.data.get(CONF_ENABLED) else 0,
+        )
+
+
+        for coordinator in self._get_coordinators(call):
+            if await coordinator.api.set_lock_autolock_config(coordinator.lock_id, config):
+                coordinator.data.auto_lock_delay = config
                 coordinator.async_update_listeners()

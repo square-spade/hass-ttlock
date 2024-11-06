@@ -16,3 +16,6 @@ CONF_ALL_DAY = "all_day"
 CONF_START_TIME = "start_time"
 CONF_END_TIME = "end_time"
 CONF_WEEK_DAYS = "days"
+
+CONF_AUTOLOCK = "autolock"
+CONF_AUTOLOCK_SECONDS = "autolock_seconds"
