@@ -140,7 +140,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
-                    sensorState = await self.api.get_sensor_state(self.lock_id)
+                    new_data.closed = sensorState.closed == SensorState.closed
                 except Exception:
                     pass
             
@@ -184,6 +184,10 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
         if sensorState := event.sensorState:
+            if sensorState.closed == SensorState.closed:
+                new_data.closed = True
+            elif sensorState.closed == SensorState.open:
+                new_data.closed = False
             
         self.async_set_updated_data(new_data)
 
