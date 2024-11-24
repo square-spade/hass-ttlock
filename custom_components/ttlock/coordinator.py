@@ -139,6 +139,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             if new_data.locked is None:
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
+                    sensorState = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
                     new_data.closed = sensorState.closed == SensorState.closed
                 except Exception:
