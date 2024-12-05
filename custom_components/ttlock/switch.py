@@ -29,7 +29,7 @@ async def async_setup_entry(
     )
     
 class LockAutoLock(BaseLockEntity, SwitchEntity):
-    """Representaion of the Autolock Switch"""
+    """Representation of the Autolock Switch"""
 
     def _update_from_coordinator(self) -> None:
         """Fetch state from the device."""
