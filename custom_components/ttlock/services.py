@@ -6,8 +6,14 @@ import logging
 import voluptuous as vol
 
 from homeassistant.const import ATTR_ENTITY_ID, CONF_ENABLED, WEEKDAYS
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 import homeassistant.helpers.config_validation as cv
+from homeassistant.util.dt import as_utc
 
 from .const import (
     CONF_ALL_DAY,
@@ -17,9 +23,15 @@ from .const import (
     CONF_WEEK_DAYS,
     CONF_AUTOLOCK_SECONDS,
     DOMAIN,
+    SVC_CLEANUP_PASSCODES,
+    SVC_CONFIG_PASSAGE_MODE,
+    SVC_CREATE_PASSCODE,
+    SVC_AUTOLOCK,
 )
 from .coordinator import LockUpdateCoordinator, coordinator_for
-from .models import OnOff, PassageModeConfig, AutoLockConfig
+
+from .models import AddPasscodeConfig, OnOff, PassageModeConfig, AutoLockConfig
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +48,7 @@ class Services:
 
         self.hass.services.register(
             DOMAIN,
-            "configure_passage_mode",
+            SVC_CONFIG_PASSAGE_MODE,
             self.handle_configure_passage_mode,
             vol.Schema(
                 {
@@ -61,6 +73,46 @@ class Services:
                     vol.Optionl(CONF_AUTOLOCK_SECONDS, default=10): cv.int,
                 }
             ),
+        )
+
+        self.hass.services.register(
+            DOMAIN,
+            SVC_CREATE_PASSCODE,
+            self.handle_create_passcode,
+            vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                    vol.Required("passcode_name"): cv.string,
+                    vol.Required("passcode"): cv.string,
+                    vol.Required("start_time", default=time()): cv.datetime,
+                    vol.Required("end_time", default=time()): cv.datetime,
+                }
+            ),
+        )
+
+        self.hass.services.register(
+            DOMAIN,
+            SVC_AUTOLOCK,
+            self.handle_autolock,
+            vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                    vol.Required(CONF_ENABLED): cv.boolean,
+                    vol.Required("autolock_seconds"): cv.string,
+                }
+            ),
+        )
+
+        self.hass.services.register(
+            DOMAIN,
+            SVC_CLEANUP_PASSCODES,
+            self.handle_cleanup_passcodes,
+            schema=vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                }
+            ),
+            supports_response=SupportsResponse.OPTIONAL,
         )
 
     def _get_coordinators(self, call: ServiceCall) -> list[LockUpdateCoordinator]:
@@ -95,12 +147,21 @@ class Services:
                 coordinator.data.passage_mode_config = config
                 coordinator.async_update_listeners()
 
+
     async def handle_autolock_config(self, call: ServiceCall):
         """Configure Autolock time"""
         
         
         config = AutoLockConfig(
-            seconds = call.data.get(CONF_AUTOLOCK_SECONDS) if call.data.get(CONF_ENABLED) else 0,
+            if call.data.get(CONF_ENABLED) == true:
+              if call.data.get(CONF_AUTOLOCK_SECONDS) <= 0:
+                seconds = 10
+              elif call.data.get(CONF_AUTOLOCK_SECONDS) > 0:
+                seconds = call.data.get(CONF_AUTOLOCK_SECONDS)
+              else:
+                seconds = 10
+            else:
+              seconds = 0
         )
 
 
@@ -108,3 +169,56 @@ class Services:
             if await coordinator.api.set_lock_autolock_config(coordinator.lock_id, config):
                 coordinator.data.auto_lock_delay = config
                 coordinator.async_update_listeners()
+
+    async def handle_create_passcode(self, call: ServiceCall):
+        """Create a new passcode for the given entities."""
+
+        start_time_val = call.data.get("start_time")
+        start_time_utc = as_utc(start_time_val)
+        start_time_ts = start_time_utc.timestamp()
+        start_time = start_time_ts * 1000
+
+        end_time_val = call.data.get("end_time")
+        end_time_utc = as_utc(end_time_val)
+        end_time_ts = end_time_utc.timestamp()
+        end_time = end_time_ts * 1000
+
+        config = AddPasscodeConfig(
+            passcode=call.data.get("passcode"),
+            passcodeName=call.data.get("passcode_name"),
+            startDate=start_time,
+            endDate=end_time,
+        )
+
+        for coordinator in self._get_coordinators(call):
+            await coordinator.api.add_passcode(coordinator.lock_id, config)
+
+    async def handle_cleanup_passcodes(self, call: ServiceCall) -> ServiceResponse:
+        """Clean up expired passcodes for the given entities."""
+        removed = []
+
+        for coordinator in self._get_coordinators(call):
+            codes = await coordinator.api.list_passcodes(coordinator.lock_id)
+            for code in codes:
+                if code.expired:
+                    await coordinator.api.delete_passcode(coordinator.lock_id, code.id)
+                    removed.append(code.name)
+
+        return {"removed": removed}
+
+    async def handle_autolock(self, call: ServiceCall):
+        """Enable passage mode for the given entities."""
+        start_time = call.data.get(CONF_START_TIME)
+        end_time = call.data.get(CONF_END_TIME)
+        
+        config = AutoLockConfig(
+            passageMode=OnOff.on if call.data.get(CONF_ENABLED) else OnOff.off,
+            autoUnlock=OnOff.on if call.data.get(CONF_AUTO_UNLOCK) else OnOff.off,
+            isAllDay=OnOff.on if call.data.get(CONF_ALL_DAY) else OnOff.off,
+        )
+
+        for coordinator in self._get_coordinators(call):
+            if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
+                coordinator.data.passage_mode_config = config
+                coordinator.async_update_listeners()
+
