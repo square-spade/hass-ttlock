@@ -87,7 +87,7 @@ class Services:
                 {
                     vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
                     vol.Required(CONF_ENABLED): cv.boolean,
-                    vol.Optional(CONF_AUTOLOCK_SECONDS): cv.int,
+                    vol.Optional(CONF_AUTOLOCK_SECONDS): cv.positive_int,
                 }
             ),
         )
