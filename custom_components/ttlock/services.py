@@ -141,7 +141,7 @@ class Services:
         """Configure Autolock time"""
         if call.data.get(CONF_ENABLED):
             if call.data.get(CONF_AUTOLOCK_SECONDS) > 0:
-              time = call.data.get(CONF_AUTOLOCK_SECONDS)
+                time = call.data.get(CONF_AUTOLOCK_SECONDS)
             time = 10
         time = 0
         
