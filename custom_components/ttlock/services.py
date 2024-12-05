@@ -169,11 +169,11 @@ class Services:
 
         return {"removed": removed}
 
-       async def handle_autolock(self, call: ServiceCall):
+    async def handle_autolock(self, call: ServiceCall):
         """Enable passage mode for the given entities."""
         start_time = call.data.get(CONF_START_TIME)
         end_time = call.data.get(CONF_END_TIME)
-   
+        
         config = AutoLockConfig(
             passageMode=OnOff.on if call.data.get(CONF_ENABLED) else OnOff.off,
             autoUnlock=OnOff.on if call.data.get(CONF_AUTO_UNLOCK) else OnOff.off,
