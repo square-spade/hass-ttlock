@@ -21,6 +21,7 @@ from .const import (
     CONF_END_TIME,
     CONF_START_TIME,
     CONF_WEEK_DAYS,
+    CONF_AUTOLOCK,
     CONF_AUTOLOCK_SECONDS,
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
@@ -62,18 +63,6 @@ class Services:
                 }
             ),
         )
-        self.hass.services.register(
-            DOMAIN,
-            "configure_autolock",
-            self.handle_autolock_config,
-            vol.Schema(
-                {
-                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-                    vol.Required(CONF_ENABLED): cv.boolean,
-                    vol.Optionl(CONF_AUTOLOCK_SECONDS, default=10): cv.int,
-                }
-            ),
-        )
 
         self.hass.services.register(
             DOMAIN,
@@ -98,7 +87,7 @@ class Services:
                 {
                     vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
                     vol.Required(CONF_ENABLED): cv.boolean,
-                    vol.Required("autolock_seconds"): cv.string,
+                    vol.Optional(CONF_AUTOLOCK_SECONDS): cv.int,
                 }
             ),
         )
@@ -148,20 +137,17 @@ class Services:
                 coordinator.async_update_listeners()
 
 
-    async def handle_autolock_config(self, call: ServiceCall):
+    async def handle_autolock(self, call: ServiceCall):
         """Configure Autolock time"""
+        if call.data.get(CONF_ENABLED):
+            if call.data.get(CONF_AUTOLOCK_SECONDS) > 0:
+              return time = call.data.get(CONF_AUTOLOCK_SECONDS)
+            return time = 10
+        return time = 0
         
         
         config = AutoLockConfig(
-            if call.data.get(CONF_ENABLED) == true:
-              if call.data.get(CONF_AUTOLOCK_SECONDS) <= 0:
-                seconds = 10
-              elif call.data.get(CONF_AUTOLOCK_SECONDS) > 0:
-                seconds = call.data.get(CONF_AUTOLOCK_SECONDS)
-              else:
-                seconds = 10
-            else:
-              seconds = 0
+            seconds=time
         )
 
 
@@ -206,19 +192,4 @@ class Services:
 
         return {"removed": removed}
 
-    async def handle_autolock(self, call: ServiceCall):
-        """Enable passage mode for the given entities."""
-        start_time = call.data.get(CONF_START_TIME)
-        end_time = call.data.get(CONF_END_TIME)
-        
-        config = AutoLockConfig(
-            passageMode=OnOff.on if call.data.get(CONF_ENABLED) else OnOff.off,
-            autoUnlock=OnOff.on if call.data.get(CONF_AUTO_UNLOCK) else OnOff.off,
-            isAllDay=OnOff.on if call.data.get(CONF_ALL_DAY) else OnOff.off,
-        )
-
-        for coordinator in self._get_coordinators(call):
-            if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
-                coordinator.data.passage_mode_config = config
-                coordinator.async_update_listeners()
 
