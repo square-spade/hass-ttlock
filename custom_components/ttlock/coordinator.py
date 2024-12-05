@@ -39,7 +39,7 @@ class LockState:
     last_user: str | None = None
     last_reason: str | None = None
     auto_lock: bool | None = None
-    auto_lock_seconds: AutoLockConfig | None = None
+    auto_lock_seconds: int | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -66,9 +66,6 @@ class LockState:
         if self.auto_lock_seconds <= 0:
             self.auto_lock = False
             return 0
-
-        if self.passage_mode_active(current_date):
-            return None
         self.auto_lock = True
         return self.auto_lock_seconds
 
@@ -150,9 +147,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             if new_data.auto_lock_delay <= 0:
                 new_data.auto_lock = False
                 new_data.auto_lock_seconds = 0
-            elif new_data.auto_lock_seconds > 0:
+            elif new_data.auto_lock_delay > 0:
                 new_data.auto_lock = True
-                new_data.auto_lock_seconds = new_data.auto_lock_seconds
+                new_data.auto_lock_seconds = new_data.auto_lock_delay
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
@@ -271,12 +268,12 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
     async def autolock_on(self) -> None:
         """Turn on autolock"""
-        res = await self.api.set_lock_autolock_config(self.lock_id, autolock_seconds=10)
+        res = await self.api.set_lock_autolock_config(self.lock_id, seconds=10)
         if res:
             self.data.auto_lock = True
 
     async def autolock_off(self) -> None:
         """Turn off autolock"""
-        res = await self.api.set_lock_autolock_config(self.lock_id, autolock_seconds=0)
+        res = await self.api.set_lock_autolock_config(self.lock_id, seconds=0)
         if res:
             self.data.auto_lock = False
