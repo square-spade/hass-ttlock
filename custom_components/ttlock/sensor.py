@@ -81,12 +81,12 @@ class LockAutoLockTime(BaseLockEntity, RestoreEntity, SensorEntity):
 
         self._attr_name = f"{self.coordinator.data.name} Auto Lock Time"
 
-        if self.coordinator.data.auto_lock_time:
+        if self.coordinator.data.auto_lock_delay:
 
-            if self.coordinator.data.auto_lock_time <= 0:
+            if self.coordinator.data.auto_lock_delay <= 0:
                 self._attr_native_value = 0
   
-            self._attr_native_value = self.coordinator.data.auto_lock_time
+            self._attr_native_value = self.coordinator.data.auto_lock_delay
 
         elif not self._attr_native_value:
 
