@@ -93,7 +93,8 @@ configure_autolock:
       description: When should the lock autolock?
       required: false
       selector:
-        int:
+        text:
+          type: number
 create_passcode:
   name: Create a new pass code
   description: Tries to create a new (temporary) passcode for a lock.
