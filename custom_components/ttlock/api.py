@@ -14,6 +14,7 @@ from aiohttp import ClientResponse, ClientSession
 from homeassistant.components.application_credentials import AuthImplementation
 from homeassistant.helpers import config_entry_oauth2_flow
 
+
 from .models import (
     AddPasscodeConfig,
     Features,
@@ -21,7 +22,9 @@ from .models import (
     LockState,
     PassageModeConfig,
     Passcode,
+    AutoLockConfig,
 )
+
 
 _LOGGER = logging.getLogger(__name__)
 GW_LOCK = asyncio.Lock()
@@ -161,11 +164,34 @@ class TTLockApi:
         async with GW_LOCK:
             res = await self.get("lock/queryOpenState", lockId=lock_id)
         return LockState.parse_obj(res)
+    
+    # async def get_sensor_state(self, lock_id: int) -> LockState:
+    #     """Get the state of a sensor."""
+    #     async with GW_LOCK:
+    #         res = await self.get("lock/queryOpenState", lockId=lock_id)
+    #     return LockState.parse_obj(res['sensorState'])
 
     async def get_lock_passage_mode_config(self, lock_id: int) -> PassageModeConfig:
         """Get the passage mode configuration of a lock."""
         res = await self.get("lock/getPassageModeConfig", lockId=lock_id)
         return PassageModeConfig.parse_obj(res)
+
+    async def get_lock_autolock_config(self, lock_id: int) -> bool:
+        """ Set the autolock configuration of the lock"""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/setAutoLockTime",
+                lockId=lock_id,
+                type=2,  # via gateway
+                seconds=10 if config.autolock else -1
+            )
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error("Failed to unlock %s: %s", lock_id, res["errmsg"])
+            return False
+
+        return True
 
     async def lock(self, lock_id: int) -> bool:
         """Try to lock the lock."""

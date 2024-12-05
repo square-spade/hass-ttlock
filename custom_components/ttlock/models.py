@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field, validator
 
 from homeassistant.util import dt
 
-
 class EpochMs(datetime):
     """Parse millisecond epoch into a local datetime."""
 
@@ -34,7 +33,6 @@ class OnOff(Enum):
         """Overload truthyness to 'on'."""
         return self == OnOff.on
 
-
 class OpenDirection(Enum):
     """Tri-state for door open direction."""
 
@@ -50,6 +48,12 @@ class State(Enum):
     unlocked = 1
     unknown = 2
 
+class SensorState(Enum):
+    """State of the Door Sensor"""
+
+    open = 0
+    closed = 1
+    unknown = 2
 
 class Lock(BaseModel):
     """Lock details."""
@@ -64,7 +68,7 @@ class Lock(BaseModel):
     model: str | None = Field(None, alias="modelNum")
     hardwareRevision: str | None = None
     firmwareRevision: str | None = None
-    autoLockTime: int = -1
+    autoLockTime: int | None = None
     lockSound: OnOff = OnOff.unknown
     privacyLock: OnOff = OnOff.unknown
     tamperAlert: OnOff = OnOff.unknown
@@ -82,6 +86,7 @@ class LockState(BaseModel):
     """Lock state."""
 
     locked: State | None = Field(State.unknown, alias="state")
+    closed: SensorState | None = Field(SensorState.unknown, alias="sensorState")
 
 
 class PassageModeConfig(BaseModel):
@@ -102,7 +107,10 @@ class PassageModeConfig(BaseModel):
     def _set_end_minute(cls, end_minute: int | None) -> int:
         return end_minute or 0
 
+class AutoLockConfig(basemodel):
+    """The autolock config of the lock"""
 
+    enabled: bool
 class PasscodeType(IntEnum):
     """Type of passcode."""
 
@@ -146,6 +154,8 @@ class Action(Enum):
     unknown = auto()
     lock = auto()
     unlock = auto()
+    open = auto()
+    closed = auto()
 
 
 EventDescription = namedtuple("EventDescription", ["action", "description"])
@@ -168,8 +178,8 @@ class Event:
         11: EventDescription(Action.lock, "lock by app"),
         12: EventDescription(Action.unlock, "unlock by gateway"),
         29: EventDescription(Action.unknown, "apply some force on the Lock"),
-        30: EventDescription(Action.unknown, "Door sensor closed"),
-        31: EventDescription(Action.unknown, "Door sensor open"),
+        30: EventDescription(Action.closed, "Door sensor closed"),
+        31: EventDescription(Action.open, "Door sensor open"),
         32: EventDescription(Action.unknown, "open from inside"),
         33: EventDescription(Action.lock, "lock by fingerprint"),
         34: EventDescription(Action.lock, "lock by passcode"),
@@ -267,16 +277,28 @@ class WebhookEvent(BaseModel):
 
         return LockState(state=None)
 
+    @property
+    def sensorState(self) -> LockState:
+        """The State of the door"""
+        if self.success and self.event.action == Action.open:
+            return LockState(sensorState=SensorState.open)
+        elif self.success and self.event.action == Action.closed:
+            return LockState(sensorState=SensorState.closed)
+
+        return LockState(sensorState=None)
 
 class Features(IntFlag):
     """Parses the features bitmask from the hex string in the api response."""
 
     # Docs: https://euopen.ttlock.com/document/doc?urlName=cloud%2Flock%2FfeatureValueEn.html.
 
+    auto_lock = 2**4
     lock_remotely = 2**8
     unlock_via_gateway = 2**10
+    door_sensor = 2** 13
     passage_mode = 2**22
     wifi = 2**56
+
 
     @classmethod
     def from_feature_value(cls, value: str | None):

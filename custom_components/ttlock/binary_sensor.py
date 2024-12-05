@@ -25,10 +25,21 @@ async def async_setup_entry(
         [
             entity
             for coordinator in lock_coordinators(hass, entry)
-            for entity in (PassageMode(coordinator),)
+            for entity in (
+                PassageMode(coordinator),
+                DoorSensor(coordinator),
+            )
         ]
+         
     )
 
+class DoorSensor(BaseLockEntity, BinarySensorEntity):
+    """Current door sensor state."""
+
+    def _update_from_coordinator(self) -> None:
+        """Fetch state from the device."""
+        self._attr_name = f"{self.coordinator.data.name}"
+        self._attr_is_on = self.coordinator.data.closed
 
 class PassageMode(BaseLockEntity, BinarySensorEntity):
     """Current passage mode state."""
@@ -37,3 +48,5 @@ class PassageMode(BaseLockEntity, BinarySensorEntity):
         """Fetch state from the device."""
         self._attr_name = f"{self.coordinator.data.name} Passage Mode"
         self._attr_is_on = self.coordinator.data.passage_mode_active()
+
+
