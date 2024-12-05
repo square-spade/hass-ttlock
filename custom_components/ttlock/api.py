@@ -176,7 +176,7 @@ class TTLockApi:
         res = await self.get("lock/getPassageModeConfig", lockId=lock_id)
         return PassageModeConfig.parse_obj(res)
 
-    async def get_lock_autolock_config(self, lock_id: int) -> bool:
+    async def set_lock_autolock_config(self, lock_id: int, config: AutoLockConfig) -> bool:
         """ Set the autolock configuration of the lock"""
 
         async with GW_LOCK:
@@ -184,7 +184,7 @@ class TTLockApi:
                 "lock/setAutoLockTime",
                 lockId=lock_id,
                 type=2,  # via gateway
-                seconds=config.autolock_seconds if config.enabled else 0,
+                seconds=config.seconds,
             )
 
         if "errcode" in res and res["errcode"] != 0:
