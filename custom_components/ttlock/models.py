@@ -182,8 +182,8 @@ class Event:
         12: EventDescription(Action.unlock, "unlock by gateway"),
         29: EventDescription(Action.unknown, "apply some force on the Lock"),
         30: EventDescription(Action.closed, "Door sensor closed"),
-        31: EventDescription(Action.open, "Door sensor open"),
-        32: EventDescription(Action.unknown, "open from inside"),
+        31: EventDescription(Action.opened, "Door sensor open"),
+        32: EventDescription(Action.opened, "open from inside"),
         33: EventDescription(Action.lock, "lock by fingerprint"),
         34: EventDescription(Action.lock, "lock by passcode"),
         35: EventDescription(Action.lock, "lock by IC card"),
@@ -283,8 +283,8 @@ class WebhookEvent(BaseModel):
     @property
     def sensorState(self) -> LockState:
         """The State of the door"""
-        if self.success and self.event.action == Action.open:
-            return LockState(sensorState=SensorState.open)
+        if self.success and self.event.action == Action.opened:
+            return LockState(sensorState=SensorState.opened)
         elif self.success and self.event.action == Action.closed:
             return LockState(sensorState=SensorState.closed)
 
