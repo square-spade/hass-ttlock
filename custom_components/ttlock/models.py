@@ -107,7 +107,7 @@ class PassageModeConfig(BaseModel):
     def _set_end_minute(cls, end_minute: int | None) -> int:
         return end_minute or 0
 
-class AutoLockConfig(basemodel):
+class AutoLockConfig(BaseModel):
     """The autolock config of the lock"""
 
     enabled: bool
