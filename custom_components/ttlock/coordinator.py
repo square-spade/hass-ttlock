@@ -39,7 +39,7 @@ class LockState:
     last_user: str | None = None
     last_reason: str | None = None
     auto_lock: bool | None = None
-    auto_lock_seconds: int | None = None
+    auto_lock_seconds: AutoLockConfig | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -64,11 +64,12 @@ class LockState:
     def auto_lock_delay(self, current_date: datetime) -> int | None:
         """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
         if self.auto_lock_seconds <= 0:
-            return None
+            self.auto_lock = False
+            return 0
 
         if self.passage_mode_active(current_date):
             return None
-
+        self.auto_lock = True
         return self.auto_lock_seconds
 
 
@@ -148,8 +149,10 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.auto_lock_delay = details.autoLockTime
             if new_data.auto_lock_delay <= 0:
                 new_data.auto_lock = False
+                new_data.auto_lock_seconds = 0
             elif new_data.auto_lock_seconds > 0:
-                new_data.auto_lock = True   
+                new_data.auto_lock = True
+                new_data.auto_lock_seconds = new_data.auto_lock_seconds
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
@@ -195,10 +198,10 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
         """Handle auto-locking the lock."""
 
-        auto_lock_delay = self.data.auto_lock_delay(lock_ts)
+        auto_lock_delay = self.data.auto_lock_seconds(lock_ts)
         computed_msg_delay = max(0, (server_ts - lock_ts).total_seconds())
 
-        if auto_lock_delay is None:
+        if self.auto_lock == False:
             _LOGGER.debug("Auto-lock is disabled")
             return
 
@@ -265,3 +268,15 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             res = await self.api.unlock(self.lock_id)
             if res:
                 self.data.locked = False
+
+    async def autolock_on(self) -> None:
+        """Turn on autolock"""
+        res = await self.api.set_lock_autolock_config(self.lock_id, autolock_seconds=10)
+        if res:
+            self.data.auto_lock = True
+
+    async def autolock_off(self) -> None:
+        """Turn off autolock"""
+        res = await self.api.set_lock_autolock_config(self.lock_id, autolock_seconds=0)
+        if res:
+            self.data.auto_lock = False

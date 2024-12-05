@@ -73,6 +73,27 @@ configure_passage_mode:
           multiple: true
           mode: list
 
+configure_autolock:
+  name: Configure Autolock
+  description: Tries to configure Autolock for a lock (or set of locks)
+  target:
+    entity:
+      integration: ttlock
+      domain: lock
+  fields:
+    enabled:
+      name: Enabled
+      description: Should autolock be active (if false, no other fields are required)
+      required: true
+      default: true
+      selector:
+        boolean:
+    seconds:
+      name: Seconds
+      description: When should the lock autolock?
+      required: false
+      selector:
+        int:
 create_passcode:
   name: Create a new pass code
   description: Tries to create a new (temporary) passcode for a lock.
@@ -116,3 +137,4 @@ cleanup_passcodes:
     entity:
       integration: ttlock
       domain: lock
+

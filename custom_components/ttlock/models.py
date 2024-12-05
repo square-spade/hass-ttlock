@@ -51,7 +51,7 @@ class State(Enum):
 class SensorState(Enum):
     """State of the Door Sensor"""
 
-    open = 0
+    opened = 0
     closed = 1
     unknown = 2
 
@@ -107,10 +107,13 @@ class PassageModeConfig(BaseModel):
     def _set_end_minute(cls, end_minute: int | None) -> int:
         return end_minute or 0
 
+
 class AutoLockConfig(BaseModel):
     """The autolock config of the lock"""
 
     enabled: bool
+    seconds: int = Field(0, alias="autoLockTime")
+                         
 class PasscodeType(IntEnum):
     """Type of passcode."""
 
@@ -154,7 +157,7 @@ class Action(Enum):
     unknown = auto()
     lock = auto()
     unlock = auto()
-    open = auto()
+    opened = auto()
     closed = auto()
 
 
