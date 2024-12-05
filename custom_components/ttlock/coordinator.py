@@ -187,7 +187,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         if sensorState := event.sensorState:
             if sensorState.closed == SensorState.closed:
                 new_data.closed = True
-            elif sensorState.closed == SensorState.open:
+            elif sensorState.closed == SensorState.opened:
                 new_data.closed = False
             
         self.async_set_updated_data(new_data)
