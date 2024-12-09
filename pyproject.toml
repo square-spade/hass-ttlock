@@ -176,7 +176,7 @@ asyncio_mode = "auto"
 filterwarnings = []
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 
 select = [
     "B007", # Loop control variable {name} not used within loop body
