@@ -7,5 +7,6 @@ home-assistant-intents
 mutagen
 python-matter-server
 ha-ffmpeg
+pymicro_vad
 aiohttp_cors # http component
 dateparser # tests
