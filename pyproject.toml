@@ -6,8 +6,8 @@ authors = ["Jonas Bergler <jonas@lemon.nz>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-homeassistant = "^2023.3.6"
+python = "^3.12"
+homeassistant = "^2024.12.1"
 
 
 [build-system]
@@ -32,7 +32,7 @@ forced_separate = [
 combine_as_imports = true
 
 [tool.pylint.MAIN]
-py-version = "3.10"
+py-version = "3.12"
 ignore = [
     "tests",
 ]
