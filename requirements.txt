@@ -1,4 +1,5 @@
 pytest-homeassistant-custom-component
+
 # cloud component
 hass_nabucasa
 webrtcvad
@@ -8,5 +9,7 @@ mutagen
 python-matter-server
 ha-ffmpeg
 pymicro_vad
+pyspeex_noise
+
 aiohttp_cors # http component
 dateparser # tests
