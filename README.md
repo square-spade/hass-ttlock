@@ -56,6 +56,7 @@ This integration uses the TTLock Cloud to communicate with your lock. It support
 # Troubleshooting
 
 ## Common issues
+
 1. Invalid client_id
    - Your Application (ie oauth) Client ID & Client Secret for the application you created on open.ttlock.com.
    - These are stored in the "Application Credentials" feature of Home Assistant. If you need to remove/update them, please follow the official [docs](https://www.home-assistant.io/integrations/application_credentials)
