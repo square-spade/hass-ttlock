@@ -10,7 +10,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.ttlock.api import TTLockApi
 from custom_components.ttlock.const import DOMAIN, TT_LOCKS
 from custom_components.ttlock.coordinator import LockUpdateCoordinator
-from custom_components.ttlock.models import Lock, LockState, PassageModeConfig
+from custom_components.ttlock.models import Lock, LockState, SensorState, PassageModeConfig
 from homeassistant.components.application_credentials import (
     ClientCredential,
     async_import_client_credential,
