@@ -50,6 +50,11 @@ class State(Enum):
     unlocked = 1
     unknown = 2
 
+class SensorState(Enum):
+    """Stste of the sensor"""
+    opened = 0
+    closed = 1
+    unknown = None
 
 class Lock(BaseModel):
     """Lock details."""
@@ -77,12 +82,19 @@ class Lock(BaseModel):
     # sensitive fields
     noKeyPwd: str = Field(alias="adminPwd")
 
+class Sensor(BaseModel):
+    """sensor details"""
+
+    id: int = Field(..., alias="doorSensorId")
+    name: str = Field("Sensor", alias="name")
+    battery_level: int | None = Field(None, alias="electricQuantity")
+    mac: str = Field(..., alias="mac")
 
 class LockState(BaseModel):
     """Lock state."""
 
     locked: State | None = Field(State.unknown, alias="state")
-
+    opened: SensorState | None = Field(SensorState.unknown, alias="sensorState")
 
 class PassageModeConfig(BaseModel):
     """The passage mode configuration of the lock."""
@@ -146,6 +158,8 @@ class Action(Enum):
     unknown = auto()
     lock = auto()
     unlock = auto()
+    open = auto()
+    close = auto()
 
 
 EventDescription = namedtuple("EventDescription", ["action", "description"])
@@ -168,9 +182,9 @@ class Event:
         11: EventDescription(Action.lock, "lock by app"),
         12: EventDescription(Action.unlock, "unlock by gateway"),
         29: EventDescription(Action.unknown, "apply some force on the Lock"),
-        30: EventDescription(Action.unknown, "Door sensor closed"),
-        31: EventDescription(Action.unknown, "Door sensor open"),
-        32: EventDescription(Action.unknown, "open from inside"),
+        30: EventDescription(Action.close, "Door sensor closed"),
+        31: EventDescription(Action.open, "Door sensor open"),
+        32: EventDescription(Action.open, "open from inside"),
         33: EventDescription(Action.lock, "lock by fingerprint"),
         34: EventDescription(Action.lock, "lock by passcode"),
         35: EventDescription(Action.lock, "lock by IC card"),
@@ -264,8 +278,16 @@ class WebhookEvent(BaseModel):
             return LockState(state=State.locked)
         elif self.success and self.event.action == Action.unlock:
             return LockState(state=State.unlocked)
-
         return LockState(state=None)
+    
+    @property
+    def sensorState(self) -> LockState:
+        """The end state of the sensor after this event"""
+        if self.success and self.event.action == Action.close:
+            return LockState(sensorState=SensorState.closed)
+        elif self.success and self.event.action == Action.open:
+            return LockState(sensorState=SensorState.opened)
+        return LockState(sensorState=None)
 
 
 class Features(IntFlag):
@@ -275,6 +297,7 @@ class Features(IntFlag):
 
     lock_remotely = 2**8
     unlock_via_gateway = 2**10
+    door_sensor = 2**13
     passage_mode = 2**22
     wifi = 2**56
 

@@ -17,7 +17,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, PassageModeConfig, State, WebhookEvent
+from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ class LockState:
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
+    opened: bool | None = None
 
     auto_lock_seconds: int = -1
     passage_mode_config: PassageModeConfig | None = None
@@ -68,6 +69,9 @@ class LockState:
         if self.passage_mode_active(current_date):
             return None
 
+        if self.opened != None:
+            return 10
+        
         return self.auto_lock_seconds
 
 
@@ -141,6 +145,12 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     new_data.locked = state.locked == State.locked
                 except Exception:
                     pass
+            if new_data.opened is None:
+                try:
+                    sensorState = await self.api.get_lock_state(self.lock_id)
+                    new_data.opened = sensorState.opened == SensorState.opened
+                except Exception:
+                    pass
 
             new_data.auto_lock_seconds = details.autoLockTime
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
@@ -179,6 +189,12 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
 
+        if sensorState := event.sensorState:
+            if sensorState.opened == SensorState.opened:
+                new_data.opened = True
+            if sensorState.opened == SensorState.closed:
+                new_data.opened = False
+            
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
