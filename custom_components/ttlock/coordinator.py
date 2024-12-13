@@ -150,9 +150,11 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
-
-            sensor = await self.api.get_sensor(self.lock_id)
-            new_data.sensor_battery = sensor.battery_level
+            try:
+                sensor = await self.api.get_sensor(self.lock_id)
+                new_data.sensor_battery = sensor.battery_level
+            except Exception:
+                pass
             
             return new_data
         except Exception as err:
