@@ -168,7 +168,8 @@ class TTLockApi:
             return support_sensor
         
         if "errcode" in res and res["errcode"] != 0:
-            return None
+            res = "status=200: body={'doorNotClosedWarningTime': 0, 'electricQuantity': 0, 'number': 'None', 'doorSensorId': 00000, 'name': 'None', 'version': '1.0.0.211223', 'mac': 'None'}"
+            return Sensor.parse_obj(res)
         return Sensor.parse_obj(res) if support_sensor else None
     
     async def get_lock_state(self, lock_id: int) -> LockState:
