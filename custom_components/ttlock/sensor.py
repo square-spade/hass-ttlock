@@ -31,6 +31,7 @@ async def async_setup_entry(
                 LockBattery(coordinator),
                 LockOperator(coordinator),
                 LockTrigger(coordinator),
+                SensorBattery(coordinator),
             )
         ]
     )
@@ -90,3 +91,14 @@ class LockTrigger(BaseLockEntity, RestoreEntity, SensorEntity):
             return
 
         self._attr_native_value = last_state.state
+
+class SensorBattery(BaseLockEntity, SensorEntity):
+    """Representaion of sensor bettery."""
+
+    _attr_device_class = SensorDeviceClass.BATTERY
+    _attr_native_unit_of_measurement = PERCENTAGE
+
+    def _update_from_coordinator(self) -> None:
+        """Fetch state from the device."""
+        self._attr_name = f"{self.coordinator.data.name} Sensor Battery"
+        self._attr_native_value = self.coordinator.data.sensor_battery

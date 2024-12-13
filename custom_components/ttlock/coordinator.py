@@ -37,7 +37,9 @@ class LockState:
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
+
     opened: bool | None = None
+    sensor_battery: int | None = None
 
     auto_lock_seconds: int = -1
     passage_mode_config: PassageModeConfig | None = None
@@ -68,9 +70,6 @@ class LockState:
 
         if self.passage_mode_active(current_date):
             return None
-
-        if self.opened is not None:
-            return 10
         
         return self.auto_lock_seconds
 
@@ -157,6 +156,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 self.lock_id
             )
 
+            new_data.sensor_battery = await self.api.get_sensor(
+                self.lock_id
+            )
             return new_data
         except Exception as err:
             raise UpdateFailed(err) from err
@@ -194,7 +196,10 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.opened = True
             if sensorState.opened == SensorState.closed:
                 new_data.opened = False
-            
+                new_data.locked = True
+                new_data.last_reason = "Auto-Lock"
+
+                _LOGGER.debug("Assuming locked via sensor")
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
@@ -205,6 +210,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
         if auto_lock_delay is None:
             _LOGGER.debug("Auto-lock is disabled")
+            
             return
 
         async def _auto_locked(seconds: int, offset: float = 0):
