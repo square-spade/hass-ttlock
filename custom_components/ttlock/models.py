@@ -284,7 +284,7 @@ class WebhookEvent(BaseModel):
     def sensorState(self) -> LockState:
         """The end state of the sensor after this event."""
         if self.success and self.event.action == Action.close:
-            return LockState(sensorState=SensorState.closed)
+            return LockState(state=State.locked, sensorState=SensorState.closed)
         elif self.success and self.event.action == Action.open:
             return LockState(sensorState=SensorState.opened)
         return LockState(sensorState=None)
