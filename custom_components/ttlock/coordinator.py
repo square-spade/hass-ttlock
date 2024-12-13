@@ -69,7 +69,7 @@ class LockState:
         if self.passage_mode_active(current_date):
             return None
 
-        if self.opened != None:
+        if self.opened is not None:
             return 10
         
         return self.auto_lock_seconds

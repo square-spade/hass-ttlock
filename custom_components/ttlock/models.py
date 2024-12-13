@@ -51,7 +51,7 @@ class State(Enum):
     unknown = 2
 
 class SensorState(Enum):
-    """Stste of the sensor"""
+    """State of the sensor."""
     opened = 0
     closed = 1
     unknown = None
@@ -83,7 +83,7 @@ class Lock(BaseModel):
     noKeyPwd: str = Field(alias="adminPwd")
 
 class Sensor(BaseModel):
-    """sensor details"""
+    """sensor details."""
 
     id: int = Field(..., alias="doorSensorId")
     name: str = Field("Sensor", alias="name")
@@ -282,7 +282,7 @@ class WebhookEvent(BaseModel):
     
     @property
     def sensorState(self) -> LockState:
-        """The end state of the sensor after this event"""
+        """The end state of the sensor after this event."""
         if self.success and self.event.action == Action.close:
             return LockState(sensorState=SensorState.closed)
         elif self.success and self.event.action == Action.open:

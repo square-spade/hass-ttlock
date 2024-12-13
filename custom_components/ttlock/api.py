@@ -18,10 +18,10 @@ from .models import (
     AddPasscodeConfig,
     Features,
     Lock,
-    Sensor,
     LockState,
     PassageModeConfig,
     Passcode,
+    Sensor,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -149,7 +149,7 @@ class TTLockApi:
                 lock.get("featureValue")
             )
             return has_gateway or has_wifi
-        
+
         return [lock["lockId"] for lock in res["list"] if lock_connectable(lock)]
 
     async def get_lock(self, lock_id: int) -> Lock:
@@ -158,7 +158,7 @@ class TTLockApi:
         return Lock.parse_obj(res)
 
     async def get_sensor(self, lock_id: int) -> Sensor:
-        """Get sensor info"""
+        """Get sensor info."""
         async with GW_LOCK:
             res = await self.get("doorSensor/query", lockId=lock_id)
 
