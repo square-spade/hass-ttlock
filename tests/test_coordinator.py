@@ -25,6 +25,7 @@ async def test_coordinator_loads_data(
 
     assert coordinator.data.name == LOCK_DETAILS["lockAlias"]
     assert coordinator.data.locked is False
+    assert coordinator.data.opened is False
     assert coordinator.data.action_pending is False
     assert coordinator.data.last_user is None
     assert coordinator.data.last_reason is None
