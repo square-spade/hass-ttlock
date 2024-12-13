@@ -151,7 +151,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 self.lock_id
             )
 
-            new_data.sensor_battery = await self.api.get_sensor(self.lock_id)
+            sensor = await self.api.get_sensor(self.lock_id)
+            new_data.sensor_battery = sensor.battery_level
+            
             return new_data
         except Exception as err:
             raise UpdateFailed(err) from err
