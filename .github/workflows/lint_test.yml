@@ -40,10 +40,10 @@ jobs:
         uses: "actions/setup-python@v4"
         with:
           python-version: "3.12"
-      - name: System Deps
-        run: |
-          sudo apt update
-          sudo apt install -y libturbojpeg
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libturbojpeg
+          version: 1.0
       - name: Install requirements
         run: python3 -m pip install -r requirements.txt
       - name: Run tests
