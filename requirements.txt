@@ -10,6 +10,7 @@ python-matter-server
 ha-ffmpeg
 pymicro_vad
 pyspeex_noise
+pyturbojpeg
 
 aiohttp_cors # http component
 dateparser # tests
