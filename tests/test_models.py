@@ -26,8 +26,8 @@ class TestEpochMs:
             [1682244497000, "America/Los_Angeles", 7, 3],
         ],
     )
-    def test_with_tz(self, hass, epoch, tz, day, hour):
-        hass.config.set_time_zone(tz)
+    async def test_with_tz(self, hass, epoch, tz, day, hour):
+        await hass.config.async_set_time_zone(tz)
         ts = self.model_under_test(ts=epoch).ts
         assert ts.isoweekday() == day
         assert ts.hour == hour
