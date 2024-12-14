@@ -27,7 +27,7 @@ async def async_setup_entry(
             for coordinator in lock_coordinators(hass, entry)
             for entity in (
                 PassageMode(coordinator),
-                Sensor(coordinator),
+                Sensor(coordinator) if coordinator.data.sensor else None,
             )
         ]
     )

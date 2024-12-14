@@ -38,6 +38,7 @@ class LockState:
     last_user: str | None = None
     last_reason: str | None = None
 
+    sensor: bool | None = None
     opened: bool | None = None
     sensor_battery: int | None = None
 
@@ -152,8 +153,13 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             )
             try:
                 sensor = await self.api.get_sensor(self.lock_id)
-                new_data.sensor_battery = sensor.battery_level
+                if sensor.battery_level is not None:
+                    new_data.sensor_battery = sensor.battery_level
+                    new_data.sensor = True
+                else:
+                    new_data.sensor = False
             except Exception:
+                new_data.sensor = False
                 pass
             
             return new_data

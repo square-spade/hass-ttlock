@@ -31,7 +31,7 @@ async def async_setup_entry(
                 LockBattery(coordinator),
                 LockOperator(coordinator),
                 LockTrigger(coordinator),
-                SensorBattery(coordinator),
+                SensorBattery(coordinator) if coordinator.data.sensor else None,
             )
         ]
     )
