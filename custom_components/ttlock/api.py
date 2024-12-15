@@ -158,19 +158,13 @@ class TTLockApi:
         return Lock.parse_obj(res)
 
     async def get_sensor(self, lock_id: int) -> Sensor:
-        """Get sensor info."""
-        try:
-            res = await self.get("doorSensor/query", lockId=lock_id)
-
-            def support_sensor(lock) -> bool:
-                support_sensor = Features.door_sensor in Features.from_feature_value(
-                    lock.get("featureValue")
-                )
-                return support_sensor
-        except Exception:
+        """Get the Sensor."""
+        res = await self.get("doorSensor/query", lockId=lock_id)
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error("Error setting up sensor", lock_id, res["errmsg"])
             pass
-        
-        return Sensor.parse_obj(res) if support_sensor(lock) else None
+        return Sensor.parse_obj(res)
+      
     
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
