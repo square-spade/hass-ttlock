@@ -42,7 +42,8 @@ class LockState:
     opened: bool | None = None
     sensor_battery: int | None = None
 
-    auto_lock_seconds: int = -1
+    auto_lock_seconds: int | None = None
+    auto_lock: bool | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -74,6 +75,11 @@ class LockState:
         
         return self.auto_lock_seconds
 
+    def auto_lock(self) -> bool:
+        """Create switch for autoLock."""
+        if self.auto_lock_seconds <= 0:
+            return False
+        return True
 
 @contextmanager
 def lock_action(controller: LockUpdateCoordinator):
@@ -279,3 +285,17 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             res = await self.api.unlock(self.lock_id)
             if res:
                 self.data.locked = False
+
+    async def auto_lock_on(self) -> None:
+        """Turn on Autolock."""
+        res = await self.api.set_auto_lock_on(self.lock_id)
+        if res:
+            self.data.auto_lock_seconds = 10
+            self.data.auto_lock = True
+
+    async def auto_lock_off(self) -> None:
+        """Turn off Autolock."""
+        res = await self.api.set_auto_lock_off(self.lock_id)
+        if res:
+            self.data.auto_lock_seconds = 0
+            self.data.auto_lock = False

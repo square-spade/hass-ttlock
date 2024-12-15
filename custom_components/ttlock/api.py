@@ -278,3 +278,45 @@ class TTLockApi:
             return False
 
         return True
+    
+    async def set_auto_lock_on(self, lock_id: int) -> bool:
+        """Turn AutoLock on or off."""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/setAutoLockTime",
+                lockId=lock_id,
+                seconds=10,
+                type=2,
+            )
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error(
+                "Failed to delete passcode for %s: %s",
+                lock_id,
+                res["errmsg"],
+            )
+            return False
+
+        return True
+    
+    async def set_auto_lock_off(self, lock_id: int) -> bool:
+        """Turn AutoLock on or off."""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/setAutoLockTime",
+                lockId=lock_id,
+                seconds=0,
+                type=2,
+            )
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error(
+                "Failed to delete passcode for %s: %s",
+                lock_id,
+                res["errmsg"],
+            )
+            return False
+
+        return True
