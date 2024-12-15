@@ -151,21 +151,19 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
             new_data.auto_lock_seconds = details.autoLockTime
             new_data.auto_lock = True if details.autoLockTime > 0 else False
-            new_data.lock_sound = True if details.lockSound else False
+            new_data.lock_sound = details.lockSound == 1
 
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
-            try:
+            
+            if Features.door_sensor in Features.from_feature_value(details.featureValue):
                 sensor = await self.api.get_sensor(self.lock_id)
                 if sensor.battery_level is not None:
                     new_data.sensor_battery = sensor.battery_level
                     new_data.sensor = True
                 else:
                     new_data.sensor = False
-            except Exception:
-                new_data.sensor = False
-                pass
             
             return new_data
         except Exception as err:
