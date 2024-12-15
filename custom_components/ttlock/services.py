@@ -173,15 +173,13 @@ class Services:
         """Set the autolock seconds"""
 
         if call.data.get(CONF_ENABLED):
-            enabled = True
             seconds = call.data.get(CONF_SECONDS) if call.data.get(CONF_SECONDS) > 0 else 10
         else:
-            enabled = False
             seconds = 0
 
         for coordinator in self._get_coordinators(call):
             if await coordinator.api.set_auto_lock(coordinator.lock_id, seconds):
-                coordinator.data.auto_lock = enabled
+                coordinator.data.auto_lock = call.data.get(CONF_ENABLED)
                 coordinator.data.auto_lock_seconds = seconds
                 coordinator.async_update_listeners()
 
