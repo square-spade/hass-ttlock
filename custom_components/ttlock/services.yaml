@@ -116,3 +116,30 @@ cleanup_passcodes:
     entity:
       integration: ttlock
       domain: lock
+
+set_autolock:
+  name: Set Autolock
+  description: Configure Autolock of the device.
+  target:
+    entity:
+      intergration: ttlock
+      domain: lock
+  fields:
+    enabled: 
+      name: Enabled
+      description: Should the Autolock feature for the lock be enabled
+      required: true
+      default: false
+      selector:
+        boolean:
+    seconds:
+      name: Seconds
+      description: How many seconds before the lock should Autolock (0-60 secs | default 10).
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 60
+          unit_of_measurement: secs
+          
+      
