@@ -170,7 +170,7 @@ class TTLockApi:
         except Exception:
             pass
         
-        return Sensor.parse_obj(res) if support_sensor else None
+        return Sensor.parse_obj(res) if support_sensor(lock) else None
     
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
