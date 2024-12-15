@@ -21,6 +21,7 @@ from .models import (
     LockState,
     PassageModeConfig,
     Passcode,
+    Sensor,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -156,6 +157,21 @@ class TTLockApi:
         res = await self.get("lock/detail", lockId=lock_id)
         return Lock.parse_obj(res)
 
+    async def get_sensor(self, lock_id: int) -> Sensor:
+        """Get sensor info."""
+        try:
+            res = await self.get("doorSensor/query", lockId=lock_id)
+
+            def support_sensor(lock) -> bool:
+                support_sensor = Features.door_sensor in Features.from_feature_value(
+                    lock.get("featureValue")
+                )
+                return support_sensor
+        except Exception:
+            pass
+        
+        return Sensor.parse_obj(res) if support_sensor else None
+    
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
         async with GW_LOCK:

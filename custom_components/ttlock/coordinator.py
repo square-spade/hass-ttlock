@@ -17,7 +17,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, PassageModeConfig, State, WebhookEvent
+from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +37,10 @@ class LockState:
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
+
+    sensor: bool | None = None
+    opened: bool | None = None
+    sensor_battery: int | None = None
 
     auto_lock_seconds: int = -1
     passage_mode_config: PassageModeConfig | None = None
@@ -67,7 +71,7 @@ class LockState:
 
         if self.passage_mode_active(current_date):
             return None
-
+        
         return self.auto_lock_seconds
 
 
@@ -139,6 +143,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
+                    new_data.opened = state.opened == SensorState.opened
                 except Exception:
                     pass
 
@@ -146,7 +151,17 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
-
+            try:
+                sensor = await self.api.get_sensor(self.lock_id)
+                if sensor.battery_level is not None:
+                    new_data.sensor_battery = sensor.battery_level
+                    new_data.sensor = True
+                else:
+                    new_data.sensor = False
+            except Exception:
+                new_data.sensor = False
+                pass
+            
             return new_data
         except Exception as err:
             raise UpdateFailed(err) from err
@@ -179,6 +194,15 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
 
+        if sensorState := event.sensorState:
+            if sensorState.opened == SensorState.opened:
+                new_data.opened = True
+            if sensorState.opened == SensorState.closed:
+                new_data.opened = False
+                new_data.locked = True
+                new_data.last_reason = "Auto-Lock"
+
+                _LOGGER.debug("Assuming locked via sensor")
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
@@ -189,6 +213,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
         if auto_lock_delay is None:
             _LOGGER.debug("Auto-lock is disabled")
+
             return
 
         async def _auto_locked(seconds: int, offset: float = 0):
