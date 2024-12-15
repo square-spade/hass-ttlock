@@ -38,6 +38,8 @@ class LockState:
     last_user: str | None = None
     last_reason: str | None = None
 
+    lock_sound: bool | None = None
+
     sensor: bool | None = None
     opened: bool | None = None
     sensor_battery: int | None = None
@@ -74,12 +76,6 @@ class LockState:
             return None
         
         return self.auto_lock_seconds
-
-    def auto_lock(self) -> bool:
-        """Create switch for autoLock."""
-        if self.auto_lock_seconds <= 0:
-            return False
-        return True
 
 @contextmanager
 def lock_action(controller: LockUpdateCoordinator):
@@ -154,6 +150,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     pass
 
             new_data.auto_lock_seconds = details.autoLockTime
+            new_data.auto_lock = True if details.autoLockTime > 0 else False
+            new_data.lock_sound = True if details.lockSound else False
+
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
@@ -288,14 +287,30 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
     async def auto_lock_on(self) -> None:
         """Turn on Autolock."""
-        res = await self.api.set_auto_lock_on(self.lock_id)
+        seconds = 10
+        res = await self.api.set_auto_lock(self.lock_id, seconds)
         if res:
             self.data.auto_lock_seconds = 10
             self.data.auto_lock = True
 
     async def auto_lock_off(self) -> None:
         """Turn off Autolock."""
-        res = await self.api.set_auto_lock_off(self.lock_id)
+        seconds = 0
+        res = await self.api.set_auto_lock(self.lock_id, seconds)
         if res:
             self.data.auto_lock_seconds = 0
             self.data.auto_lock = False
+
+    async def lock_sound_on(self) -> None:
+        """Turn on lock sound."""
+        value = 1
+        res = await self.api.set_lock_sound(self.lock_id, value)
+        if res:
+            self.data.lock_sound = True
+
+    async def lock_sound_off(self) -> None:
+        """Turn off the lock sound."""
+        value = 2
+        res = await self.api.set_lock_sound(self.lock_id, value)
+        if res:
+            self.data.lock_sound = False

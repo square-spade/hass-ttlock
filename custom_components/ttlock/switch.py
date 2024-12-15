@@ -22,7 +22,14 @@ async def async_setup_entry(
     """Set up all the locks for the config entry."""
 
     async_add_entities(
-        [Autolock(coordinator) for coordinator in lock_coordinators(hass, entry)]
+        [
+            entity
+            for coordinator in lock_coordinators(hass, entry)
+            for entity in (
+                Autolock(coordinator),
+                Locksound(coordinator),
+            )
+        ]
     )
 
 class Autolock(BaseLockEntity, SwitchEntity):
@@ -42,4 +49,22 @@ class Autolock(BaseLockEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self.coordinator.auto_lock_off()
+
+class Locksound(BaseLockEntity, SwitchEntity):
+    """The entity object for a switch"""
+
+    _attr_device_class = SwitchDeviceClass.SWITCH
+
+    def _update_from_coordinator(self) -> None:
+        """Fetch state from the device."""
+        self._attr_name = f"{self.coordinator.data.name} Lock Sound"
+        self._attr_is_on = self.coordinator.data.lock_sound
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the entity on."""
+        await self.coordinator.lock_sound_on()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the entity off."""
+        await self.coordinator.lock_sound_off()
 
