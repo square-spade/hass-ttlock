@@ -158,19 +158,13 @@ class TTLockApi:
         return Lock.parse_obj(res)
 
     async def get_sensor(self, lock_id: int) -> Sensor:
-        """Get sensor info."""
-        try:
-            res = await self.get("doorSensor/query", lockId=lock_id)
-
-            def support_sensor(lock) -> bool:
-                support_sensor = Features.door_sensor in Features.from_feature_value(
-                    lock.get("featureValue")
-                )
-                return support_sensor
-        except Exception:
+        """Get the Sensor."""
+        res = await self.get("doorSensor/query", lockId=lock_id)
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error("Error setting up sensor", lock_id, res["errmsg"])
             pass
-        
-        return Sensor.parse_obj(res) if support_sensor else None
+        return Sensor.parse_obj(res)
+      
     
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
@@ -274,6 +268,49 @@ class TTLockApi:
                 "Failed to delete passcode for %s: %s",
                 lock_id,
                 resDel["errmsg"],
+            )
+            return False
+
+        return True
+    
+    async def set_auto_lock(self, lock_id: int, seconds: int) -> bool:
+        """Set the AutoLock feature of the lock."""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/setAutoLockTime",
+                lockId=lock_id,
+                seconds=seconds,
+                type=2,
+            )
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error(
+                "Failed to update autolock",
+                lock_id,
+                res["errmsg"],
+            )
+            return False
+
+        return True
+
+    async def set_lock_sound(self, lock_id: int, value: int) -> bool:
+        """Set the LockSound feature of the lock."""
+
+        async with GW_LOCK:
+            res = await self.post(
+                "lock/updateSetting",
+                lockId=lock_id,
+                value=value,
+                type=6,
+                changeType=2,
+            )
+
+        if "errcode" in res and res["errcode"] != 0:
+            _LOGGER.error(
+                "Failed to update sound setting",
+                lock_id,
+                res["errmsg"],
             )
             return False
 

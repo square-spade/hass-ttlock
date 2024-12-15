@@ -69,7 +69,7 @@ class Lock(BaseModel):
     model: str | None = Field(None, alias="modelNum")
     hardwareRevision: str | None = None
     firmwareRevision: str | None = None
-    autoLockTime: int = -1
+    autoLockTime: int | None = Field(None, alias="autoLockTime")
     lockSound: OnOff = OnOff.unknown
     privacyLock: OnOff = OnOff.unknown
     tamperAlert: OnOff = OnOff.unknown
