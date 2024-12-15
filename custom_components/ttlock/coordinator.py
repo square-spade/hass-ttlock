@@ -292,6 +292,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         if res:
             self.data.auto_lock_seconds = 10
             self.data.auto_lock = True
+            self.async_update_listeners()
 
     async def auto_lock_off(self) -> None:
         """Turn off Autolock."""
@@ -300,6 +301,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         if res:
             self.data.auto_lock_seconds = 0
             self.data.auto_lock = False
+            self.async_update_listeners()
 
     async def lock_sound_on(self) -> None:
         """Turn on lock sound."""
@@ -307,6 +309,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         res = await self.api.set_lock_sound(self.lock_id, value)
         if res:
             self.data.lock_sound = True
+            self.async_update_listeners()
 
     async def lock_sound_off(self) -> None:
         """Turn off the lock sound."""
@@ -314,3 +317,4 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         res = await self.api.set_lock_sound(self.lock_id, value)
         if res:
             self.data.lock_sound = False
+            self.async_update_listeners()
