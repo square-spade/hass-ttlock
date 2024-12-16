@@ -50,7 +50,7 @@ class AutoLock(BaseLockEntity, SwitchEntity):
         """Turn the entity off."""
         await self.coordinator.auto_lock_off()
 
-class Locksound(BaseLockEntity, SwitchEntity):
+class LockSound(BaseLockEntity, SwitchEntity):
     """The entity object for a switch"""
 
     _attr_device_class = SwitchDeviceClass.SWITCH
