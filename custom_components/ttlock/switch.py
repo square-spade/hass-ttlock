@@ -32,7 +32,7 @@ async def async_setup_entry(
         ]
     )
 
-class Autolock(BaseLockEntity, SwitchEntity):
+class AutoLock(BaseLockEntity, SwitchEntity):
     """The entity object for a switch"""
 
     _attr_device_class = SwitchDeviceClass.SWITCH
