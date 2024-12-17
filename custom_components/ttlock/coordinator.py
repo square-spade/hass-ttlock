@@ -44,7 +44,7 @@ class LockState:
     opened: bool | None = None
     sensor_battery: int | None = None
 
-    auto_lock_seconds: int | None = None
+    auto_lock_seconds: int = 0
     auto_lock: bool | None = None
     passage_mode_config: PassageModeConfig | None = None
 
@@ -74,8 +74,9 @@ class LockState:
 
         if self.passage_mode_active(current_date):
             return None
-        
+
         return self.auto_lock_seconds
+
 
 @contextmanager
 def lock_action(controller: LockUpdateCoordinator):
@@ -150,21 +151,26 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     pass
 
             new_data.auto_lock_seconds = details.autoLockTime
-            new_data.auto_lock = True if details.autoLockTime > 0 else False
+            if details.autoLockSeconds > 0:
+                new_data.auto_lock = True
+            else:
+                new_data.auto_lock = False
             new_data.lock_sound = details.lockSound == 1
 
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
-            
-            if Features.door_sensor in Features.from_feature_value(details.featureValue):
+
+            if Features.door_sensor in Features.from_feature_value(
+                details.featureValue
+            ):
                 sensor = await self.api.get_sensor(self.lock_id)
                 if sensor.battery_level is not None:
                     new_data.sensor_battery = sensor.battery_level
                     new_data.sensor = True
                 else:
                     new_data.sensor = False
-            
+
             return new_data
         except Exception as err:
             raise UpdateFailed(err) from err

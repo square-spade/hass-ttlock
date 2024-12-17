@@ -50,11 +50,14 @@ class State(Enum):
     unlocked = 1
     unknown = 2
 
+
 class SensorState(Enum):
     """State of the sensor."""
+
     opened = 0
     closed = 1
     unknown = None
+
 
 class Lock(BaseModel):
     """Lock details."""
@@ -82,6 +85,7 @@ class Lock(BaseModel):
     # sensitive fields
     noKeyPwd: str = Field(alias="adminPwd")
 
+
 class Sensor(BaseModel):
     """sensor details."""
 
@@ -90,11 +94,13 @@ class Sensor(BaseModel):
     battery_level: int | None = Field(None, alias="electricQuantity")
     mac: str = Field(..., alias="mac")
 
+
 class LockState(BaseModel):
     """Lock state."""
 
     locked: State | None = Field(State.unknown, alias="state")
     opened: SensorState | None = Field(SensorState.unknown, alias="sensorState")
+
 
 class PassageModeConfig(BaseModel):
     """The passage mode configuration of the lock."""
@@ -279,7 +285,7 @@ class WebhookEvent(BaseModel):
         elif self.success and self.event.action == Action.unlock:
             return LockState(state=State.unlocked)
         return LockState(state=None)
-    
+
     @property
     def sensorState(self) -> LockState:
         """The end state of the sensor after this event."""

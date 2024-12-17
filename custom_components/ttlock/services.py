@@ -96,7 +96,9 @@ class Services:
                 {
                     vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
                     vol.Required(CONF_ENABLED): cv.boolean,
-                    vol.Optional(CONF_SECONDS): vol.All(vol.Coerce(int), vol.Range(min=0, max=60)),
+                    vol.Optional(CONF_SECONDS): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=60)
+                    ),
                 }
             ),
         )
@@ -168,12 +170,14 @@ class Services:
                     removed.append(code.name)
 
         return {"removed": removed}
-    
+
     async def handle_set_autolock(self, call: ServiceCall):
-        """Set the autolock seconds"""
+        """Set the autolock seconds."""
 
         if call.data.get(CONF_ENABLED):
-            seconds = call.data.get(CONF_SECONDS) if call.data.get(CONF_SECONDS) > 0 else 10
+            seconds = (
+                call.data.get(CONF_SECONDS) if call.data.get(CONF_SECONDS) > 0 else 10
+            )
         else:
             seconds = 0
 
@@ -182,4 +186,3 @@ class Services:
                 coordinator.data.auto_lock = call.data.get(CONF_ENABLED)
                 coordinator.data.auto_lock_seconds = seconds
                 coordinator.async_update_listeners()
-

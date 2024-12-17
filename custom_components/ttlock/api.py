@@ -164,8 +164,7 @@ class TTLockApi:
             _LOGGER.error("Error setting up sensor", lock_id, res["errmsg"])
             pass
         return Sensor.parse_obj(res)
-      
-    
+
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
         async with GW_LOCK:
@@ -272,7 +271,7 @@ class TTLockApi:
             return False
 
         return True
-    
+
     async def set_auto_lock(self, lock_id: int, seconds: int) -> bool:
         """Set the AutoLock feature of the lock."""
 

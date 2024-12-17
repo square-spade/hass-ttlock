@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
@@ -26,14 +25,15 @@ async def async_setup_entry(
             entity
             for coordinator in lock_coordinators(hass, entry)
             for entity in (
-                Autolock(coordinator),
-                Locksound(coordinator),
+                AutoLock(coordinator),
+                LockSound(coordinator),
             )
         ]
     )
 
+
 class AutoLock(BaseLockEntity, SwitchEntity):
-    """The entity object for a switch"""
+    """The entity object for a switch."""
 
     _attr_device_class = SwitchDeviceClass.SWITCH
 
@@ -50,8 +50,9 @@ class AutoLock(BaseLockEntity, SwitchEntity):
         """Turn the entity off."""
         await self.coordinator.auto_lock_off()
 
+
 class LockSound(BaseLockEntity, SwitchEntity):
-    """The entity object for a switch"""
+    """The entity object for a switch."""
 
     _attr_device_class = SwitchDeviceClass.SWITCH
 
@@ -67,4 +68,3 @@ class LockSound(BaseLockEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self.coordinator.lock_sound_off()
-

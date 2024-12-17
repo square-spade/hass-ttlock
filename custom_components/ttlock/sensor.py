@@ -92,8 +92,9 @@ class LockTrigger(BaseLockEntity, RestoreEntity, SensorEntity):
 
         self._attr_native_value = last_state.state
 
+
 class SensorBattery(BaseLockEntity, SensorEntity):
-    """Representaion of sensor bettery."""
+    """Representation of sensor battery."""
 
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
