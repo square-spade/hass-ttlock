@@ -210,11 +210,11 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
 
-        if sensorState := event.sensorState:
-            if sensorState.opened == SensorState.opened:
-                new_data.opened = True
-            if sensorState.opened == SensorState.closed:
-                new_data.opened = False
+        if new_data.sensor and event.sensorState:
+            if event.sensorState.opened == SensorState.opened:
+                new_data.sensor.opened = True
+            if event.sensorState.opened == SensorState.closed:
+                new_data.sensor.opened = False
                 new_data.locked = True
                 new_data.last_reason = "Auto-Lock"
 
