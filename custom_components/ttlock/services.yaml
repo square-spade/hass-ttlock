@@ -125,7 +125,7 @@ set_autolock:
       integration: ttlock
       domain: lock
   fields:
-    enabled: 
+    enabled:
       name: Enabled
       description: Should the Autolock feature for the lock be enabled?
       required: true
@@ -141,5 +141,3 @@ set_autolock:
           min: 0
           max: 60
           unit_of_measurement: secs
-          
-      
