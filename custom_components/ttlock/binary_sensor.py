@@ -44,7 +44,11 @@ class Sensor(BaseLockEntity, BinarySensorEntity):
     def _update_from_coordinator(self) -> None:
         """Fetch state of device."""
         self._attr_name = f"{self.coordinator.data.name} Sensor"
-        self._attr_is_on = self.coordinator.data.opened
+        self._attr_is_on = (
+            bool(self.coordinator.data.sensor.opened)
+            if self.coordinator.data.sensor
+            else False
+        )
 
 
 class PassageMode(BaseLockEntity, BinarySensorEntity):

@@ -23,6 +23,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
+class SensorData:
+    """Internal state of the optional door sensor."""
+
+    opened: bool | None = None
+    battery: int | None = None
+    last_fetched: datetime | None = None
+
+
+@dataclass
 class LockState:
     """Internal state of the lock as managed by the co-oridinator."""
 
@@ -32,18 +41,13 @@ class LockState:
     battery_level: int | None = None
     hardware_version: str | None = None
     firmware_version: str | None = None
-    features: Features | None = None
+    features: Features = Features.from_feature_value(None)
     locked: bool | None = None
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
-
     lock_sound: bool | None = None
-
-    sensor: bool | None = None
-    opened: bool | None = None
-    sensor_battery: int | None = None
-
+    sensor: SensorData | None = None
     auto_lock_seconds: int | None = None
     passage_mode_config: PassageModeConfig | None = None
 
@@ -141,11 +145,29 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.hardware_version = details.hardwareRevision
             new_data.firmware_version = details.firmwareRevision
 
+            if Features.door_sensor in new_data.features:
+                # make sure we have a placeholder for sensor state if the lock supports it
+                if new_data.sensor is None:
+                    new_data.sensor = SensorData()
+
+                # only fetch sensor metadata once a day
+                if (
+                    new_data.sensor.last_fetched
+                    and new_data.sensor.last_fetched > dt.now() - timedelta(days=1)
+                ):
+                    sensor = await self.api.get_sensor(self.lock_id)
+
+                    new_data.sensor.battery = sensor.battery_level
+                    new_data.sensor.last_fetched = dt.now()
+            else:
+                new_data.sensor = None
+
             if new_data.locked is None:
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
-                    new_data.opened = state.opened == SensorState.opened
+                    if new_data.sensor:
+                        new_data.sensor.opened = state.opened == SensorState.opened
                 except Exception:
                     pass
 
@@ -155,16 +177,6 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
-
-            if Features.door_sensor in Features.from_feature_value(
-                details.featureValue
-            ):
-                sensor = await self.api.get_sensor(self.lock_id)
-                if sensor.battery_level is not None:
-                    new_data.sensor_battery = sensor.battery_level
-                    new_data.sensor = True
-                else:
-                    new_data.sensor = False
 
             return new_data
         except Exception as err:
