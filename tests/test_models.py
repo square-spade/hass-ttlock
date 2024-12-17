@@ -79,6 +79,7 @@ class TestFeatures:
                     Features.unlock_via_gateway,
                     Features.passage_mode,
                     Features.wifi,
+                    Features.door_sensor,
                 ),
             ],
             [
