@@ -45,7 +45,6 @@ class LockState:
     sensor_battery: int | None = None
 
     auto_lock_seconds: int | None = None
-    auto_lock: bool | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -69,7 +68,7 @@ class LockState:
 
     def auto_lock_delay(self, current_date: datetime) -> int | None:
         """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
-        if self.auto_lock_seconds <= 0:
+        if self.auto_lock_seconds is None or self.auto_lock_seconds <= 0:
             return None
 
         if self.passage_mode_active(current_date):
@@ -151,7 +150,6 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     pass
 
             new_data.auto_lock_seconds = details.autoLockTime
-            new_data.auto_lock = True if details.autoLockTime > 0 else False
             new_data.lock_sound = details.lockSound == 1
 
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
@@ -286,36 +284,18 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             if res:
                 self.data.locked = False
 
-    async def auto_lock_on(self) -> None:
-        """Turn on Autolock."""
-        seconds = 10
+    async def set_auto_lock(self, on: bool) -> None:
+        """Turn on/off Autolock."""
+        seconds = 10 if on else 0
         res = await self.api.set_auto_lock(self.lock_id, seconds)
         if res:
-            self.data.auto_lock_seconds = 10
-            self.data.auto_lock = True
+            self.data.auto_lock_seconds = seconds
             self.async_update_listeners()
 
-    async def auto_lock_off(self) -> None:
-        """Turn off Autolock."""
-        seconds = 0
-        res = await self.api.set_auto_lock(self.lock_id, seconds)
-        if res:
-            self.data.auto_lock_seconds = 0
-            self.data.auto_lock = False
-            self.async_update_listeners()
-
-    async def lock_sound_on(self) -> None:
-        """Turn on lock sound."""
-        value = 1
+    async def set_lock_sound(self, on: bool) -> None:
+        """Turn on/off lock sound."""
+        value = 1 if on else 0
         res = await self.api.set_lock_sound(self.lock_id, value)
         if res:
-            self.data.lock_sound = True
-            self.async_update_listeners()
-
-    async def lock_sound_off(self) -> None:
-        """Turn off the lock sound."""
-        value = 2
-        res = await self.api.set_lock_sound(self.lock_id, value)
-        if res:
-            self.data.lock_sound = False
+            self.data.lock_sound = on
             self.async_update_listeners()

@@ -24,9 +24,9 @@ from .const import (
     CONF_WEEK_DAYS,
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
+    SVC_CONFIG_AUTOLOCK,
     SVC_CONFIG_PASSAGE_MODE,
     SVC_CREATE_PASSCODE,
-    SVC_SET_AUTOLOCK,
 )
 from .coordinator import LockUpdateCoordinator, coordinator_for
 from .models import AddPasscodeConfig, OnOff, PassageModeConfig
@@ -90,8 +90,8 @@ class Services:
 
         self.hass.services.register(
             DOMAIN,
-            SVC_SET_AUTOLOCK,
-            self.handle_set_autolock,
+            SVC_CONFIG_AUTOLOCK,
+            self.handle_configure_autolock,
             vol.Schema(
                 {
                     vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
@@ -171,18 +171,15 @@ class Services:
 
         return {"removed": removed}
 
-    async def handle_set_autolock(self, call: ServiceCall):
+    async def handle_configure_autolock(self, call: ServiceCall):
         """Set the autolock seconds."""
 
         if call.data.get(CONF_ENABLED):
-            seconds = (
-                call.data.get(CONF_SECONDS) if call.data.get(CONF_SECONDS) > 0 else 10
-            )
+            seconds = call.data.get(CONF_SECONDS) or 10
         else:
             seconds = 0
 
         for coordinator in self._get_coordinators(call):
             if await coordinator.api.set_auto_lock(coordinator.lock_id, seconds):
-                coordinator.data.auto_lock = call.data.get(CONF_ENABLED)
                 coordinator.data.auto_lock_seconds = seconds
                 coordinator.async_update_listeners()

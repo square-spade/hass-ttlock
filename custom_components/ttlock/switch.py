@@ -44,11 +44,11 @@ class AutoLock(BaseLockEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        await self.coordinator.auto_lock_on()
+        await self.coordinator.set_auto_lock(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.coordinator.auto_lock_off()
+        await self.coordinator.set_auto_lock(False)
 
 
 class LockSound(BaseLockEntity, SwitchEntity):
@@ -63,8 +63,8 @@ class LockSound(BaseLockEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        await self.coordinator.lock_sound_on()
+        await self.coordinator.set_lock_sound(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.coordinator.lock_sound_off()
+        await self.coordinator.set_lock_sound(False)

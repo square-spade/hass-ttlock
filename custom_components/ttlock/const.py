@@ -18,7 +18,7 @@ CONF_END_TIME = "end_time"
 CONF_WEEK_DAYS = "days"
 CONF_SECONDS = "seconds"
 
+SVC_CONFIG_AUTOLOCK = "configure_autolock"
 SVC_CONFIG_PASSAGE_MODE = "configure_passage_mode"
 SVC_CREATE_PASSCODE = "create_passcode"
 SVC_CLEANUP_PASSCODES = "cleanup_passcodes"
-SVC_SET_AUTOLOCK = "set_autolock"
