@@ -117,8 +117,8 @@ cleanup_passcodes:
       integration: ttlock
       domain: lock
 
-set_autolock:
-  name: Set Autolock
+configue_autolock:
+  name: Configure Autolock
   description: Configure Autolock of the device.
   target:
     entity:

@@ -102,4 +102,8 @@ class SensorBattery(BaseLockEntity, SensorEntity):
     def _update_from_coordinator(self) -> None:
         """Fetch state from the device."""
         self._attr_name = f"{self.coordinator.data.name} Sensor Battery"
-        self._attr_native_value = self.coordinator.data.sensor_battery
+        self._attr_native_value = (
+            self.coordinator.data.sensor.battery
+            if self.coordinator.data.sensor
+            else None
+        )
