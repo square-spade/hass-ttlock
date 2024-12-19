@@ -67,4 +67,4 @@ class LockSound(BaseLockEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.coordinator.set.lock.sound(False)
+        await self.coordinator.set_lock_sound(False)

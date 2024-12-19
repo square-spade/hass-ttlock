@@ -41,15 +41,14 @@ class LockState:
     battery_level: int | None = None
     hardware_version: str | None = None
     firmware_version: str | None = None
+    features: Features = Features.from_feature_value(None)
     locked: bool | None = None
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
-
     lock_sound: bool | None = None
-    features: Features = Features.from_feature_value(None)
     sensor: SensorData | None = None
-    auto_lock_seconds: int = 0
+    auto_lock_seconds: int | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -145,6 +144,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.battery_level = details.battery_level
             new_data.hardware_version = details.hardwareRevision
             new_data.firmware_version = details.firmwareRevision
+
             if Features.door_sensor in new_data.features:
                 # make sure we have a placeholder for sensor state if the lock supports it
                 if new_data.sensor is None:
@@ -161,6 +161,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     new_data.sensor.last_fetched = dt.now()
             else:
                 new_data.sensor = None
+
             if new_data.locked is None:
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
