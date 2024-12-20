@@ -311,8 +311,3 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         if res:
             self.data.lock_sound = on
             self.async_update_listeners()
-    def auto_lock(self) -> None:
-        """Auto Lock State."""
-        if self.data.auto_lock_seconds > 0:
-            return True
-        return False
