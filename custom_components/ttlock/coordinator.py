@@ -309,5 +309,5 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         value = 1 if on else 0
         res = await self.api.set_lock_sound(self.lock_id, value)
         if res:
-            self.data.lock_sound = on
+            self.data.lock_sound = value == 1
             self.async_update_listeners()
