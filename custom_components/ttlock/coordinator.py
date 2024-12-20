@@ -309,5 +309,10 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         value = 1 if on else 0
         res = await self.api.set_lock_sound(self.lock_id, value)
         if res:
-            self.data.lock_sound = value == 1
+            self.data.lock_sound = on
             self.async_update_listeners()
+    def auto_lock(self) -> None:
+        """Auto Lock State."""
+        if self.data.auto_lock_seconds > 0:
+            return True
+        return False
