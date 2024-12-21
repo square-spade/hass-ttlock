@@ -172,7 +172,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     pass
 
             new_data.auto_lock_seconds = details.autoLockTime
-            new_data.lock_sound = details.lockSound == OnOff.on
+            new_data.lock_sound = details.lockSound
 
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
