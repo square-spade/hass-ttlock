@@ -17,7 +17,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent
+from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent, OnOff
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -172,7 +172,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     pass
 
             new_data.auto_lock_seconds = details.autoLockTime
-            new_data.lock_sound = details.lockSound == 1
+            new_data.lock_sound = details.lockSound == OnOff.on
 
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
