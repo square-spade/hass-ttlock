@@ -216,9 +216,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             if event.sensorState.opened == SensorState.closed:
                 new_data.sensor.opened = False
                 new_data.locked = True
-                new_data.last_reason = "Auto-Lock"
+                new_data.last_reason = "Door Closed"
 
-                _LOGGER.debug("Assuming locked via sensor")
+                _LOGGER.debug("Assuming auto-locked via sensor")
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
