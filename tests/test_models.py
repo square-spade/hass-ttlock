@@ -6,6 +6,8 @@ import pytest
 from custom_components.ttlock.models import (
     EpochMs,
     Features,
+    Lock,
+    OnOff,
     PassageModeConfig,
     Passcode,
 )
@@ -138,3 +140,41 @@ class TestPasscode:
             }
         )
         assert code.expired == expired
+
+
+# All the required fields
+MINIMAL_LOCK = {
+    "lockId": 1,
+    "lockName": "A Lock",
+    "lockAlias": "My Lock",
+    "lockMac": "00:00:00:00:00:0",
+    "date": 0,
+    "adminPwd": "1234",
+}
+
+
+class TestLock:
+    def test_basic_lock(self):
+        lock = Lock.parse_obj(
+            {
+                **MINIMAL_LOCK,
+                "lockId": 123,
+            }
+        )
+        assert lock.id == 123
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (1, OnOff.on),
+            (2, OnOff.off),
+        ],
+    )
+    def test_lock_sound(self, value, expected):
+        lock = Lock.parse_obj(
+            {
+                **MINIMAL_LOCK,
+                "lockSound": value,
+            }
+        )
+        assert lock.lockSound == expected
