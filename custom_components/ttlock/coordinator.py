@@ -17,7 +17,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent, OnOff
+from .models import Features, OnOff, PassageModeConfig, SensorState, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
