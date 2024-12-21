@@ -1,4 +1,4 @@
-0"""Provides the TTLock LockUpdateCoordinator."""
+"""Provides the TTLock LockUpdateCoordinator."""
 from __future__ import annotations
 
 import asyncio
