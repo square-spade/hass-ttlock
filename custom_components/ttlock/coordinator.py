@@ -306,7 +306,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
     async def set_lock_sound(self, on: bool) -> None:
         """Turn on/off lock sound."""
-        value = 1 if on else 0
+        value = 1 if on else 2
         res = await self.api.set_lock_sound(self.lock_id, value)
         if res:
             self.data.lock_sound = on
