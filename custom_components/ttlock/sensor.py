@@ -33,6 +33,7 @@ async def async_setup_entry(
                 LockTrigger(coordinator),
                 SensorBattery(coordinator) if coordinator.data.sensor else None,
             )
+            if entity is not None
         ]
     )
 
