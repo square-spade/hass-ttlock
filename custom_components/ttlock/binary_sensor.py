@@ -32,6 +32,7 @@ async def async_setup_entry(
                 PassageMode(coordinator),
                 Sensor(coordinator) if coordinator.data.sensor else None,
             )
+            if entity is not None
         ]
     )
 
