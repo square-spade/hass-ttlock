@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta
 
-from pydantic import BaseModel
 import pytest
+
+try:
+    from pydantic.v1 import BaseModel
+except ImportError:
+    from pydantic import BaseModel
 
 from custom_components.ttlock.models import (
     EpochMs,
