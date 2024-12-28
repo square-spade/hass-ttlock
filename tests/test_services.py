@@ -16,8 +16,9 @@ from homeassistant.util import dt
 
 class Test_create_passcode:
     async def test_can_create_passcode(
-        self, hass: HomeAssistant, component_setup, sane_default_data
+        self, hass: HomeAssistant, component_setup, mock_api_responses
     ):
+        mock_api_responses("default")
         coordinator = await component_setup()
 
         attrs = {
@@ -54,9 +55,10 @@ class Test_create_passcode:
 class Test_cleanup_passcodes:
     @pytest.mark.parametrize("return_response", (True, False))
     async def test_works_when_there_is_nothing_to_do(
-        self, hass: HomeAssistant, component_setup, sane_default_data, return_response
+        self, hass: HomeAssistant, component_setup, mock_api_responses, return_response
     ) -> None:
         """Test get schedule service."""
+        mock_api_responses("default")
         coordinator = await component_setup()
 
         with patch(
@@ -81,9 +83,10 @@ class Test_cleanup_passcodes:
         self,
         hass: HomeAssistant,
         component_setup,
-        sane_default_data,
+        mock_api_responses,
     ) -> None:
         """Test get schedule service."""
+        mock_api_responses("default")
         coordinator = await component_setup()
 
         with patch(
