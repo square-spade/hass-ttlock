@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 import pytest
 
 from custom_components.ttlock.models import (

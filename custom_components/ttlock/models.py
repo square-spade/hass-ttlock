@@ -4,7 +4,7 @@ from collections import namedtuple
 from datetime import datetime
 from enum import Enum, IntEnum, IntFlag, auto
 
-from pydantic import BaseModel, Field, validator
+from pydantic.v1 import BaseModel, Field, validator
 
 from homeassistant.util import dt
 
