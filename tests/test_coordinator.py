@@ -10,7 +10,7 @@ from custom_components.ttlock.coordinator import LockState, LockUpdateCoordinato
 from custom_components.ttlock.models import PassageModeConfig, WebhookEvent
 
 from .const import (
-    LOCK_DETAILS,
+    BASIC_LOCK_DETAILS,
     PASSAGE_MODE_6_TO_6_7_DAYS,
     PASSAGE_MODE_ALL_DAY_WEEKDAYS,
     WEBHOOK_LOCK_10AM_UTC,
@@ -19,11 +19,12 @@ from .const import (
 
 
 async def test_coordinator_loads_data(
-    coordinator: LockUpdateCoordinator, sane_default_data
+    coordinator: LockUpdateCoordinator, mock_api_responses
 ):
+    mock_api_responses("default")
     await coordinator.async_refresh()
 
-    assert coordinator.data.name == LOCK_DETAILS["lockAlias"]
+    assert coordinator.data.name == BASIC_LOCK_DETAILS["lockAlias"]
     assert coordinator.data.locked is False
     assert coordinator.data.sensor is None
     assert coordinator.data.action_pending is False
@@ -133,8 +134,9 @@ class TestLockState:
 class TestLockUpdateCoordinator:
     class TestProcessWebhookData:
         async def test_lock_works(
-            self, coordinator: LockUpdateCoordinator, sane_default_data
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
         ):
+            mock_api_responses("default")
             await coordinator.async_refresh()
             coordinator.data.locked = False
 
@@ -147,8 +149,9 @@ class TestLockUpdateCoordinator:
             assert coordinator.data.last_reason == "lock by lock key"
 
         async def test_unlock_works(
-            self, coordinator: LockUpdateCoordinator, sane_default_data
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
         ):
+            mock_api_responses("default")
             await coordinator.async_refresh()
             coordinator.data.locked = True
             coordinator.data.auto_lock_seconds = -1
@@ -161,8 +164,9 @@ class TestLockUpdateCoordinator:
             assert coordinator.data.last_reason == "unlock by IC card"
 
         async def test_auto_lock_works(
-            self, hass, coordinator: LockUpdateCoordinator, sane_default_data
+            self, hass, coordinator: LockUpdateCoordinator, mock_api_responses
         ):
+            mock_api_responses("default")
             await coordinator.async_refresh()
             coordinator.data.locked = True
             coordinator.data.auto_lock_seconds = 1
