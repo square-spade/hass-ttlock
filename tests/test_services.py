@@ -6,6 +6,7 @@ import pytest
 from custom_components.ttlock.const import (
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
+    SVC_CONFIG_AUTOLOCK,
     SVC_CREATE_PASSCODE,
 )
 from custom_components.ttlock.models import AddPasscodeConfig, Passcode, PasscodeType
@@ -113,3 +114,33 @@ class Test_cleanup_passcodes:
             assert mock.call_args_list == [call(coordinator.lock_id, 123)]
 
         assert response == {"removed": ["Test"]}
+
+
+class Test_config_autolock:
+    async def test_can_config_autolock(
+        self, hass: HomeAssistant, component_setup, mock_api_responses
+    ):
+        mock_api_responses("default")
+        coordinator = await component_setup()
+
+        attrs = {
+            "seconds": 10,
+        }
+        with patch(
+            "custom_components.ttlock.api.TTLockApi.set_autolock", return_value=True
+        ) as mock:
+            await hass.services.async_call(
+                DOMAIN,
+                SVC_CONFIG_AUTOLOCK,
+                {
+                    ATTR_ENTITY_ID: coordinator.entities[0].entity_id,
+                    **attrs,
+                },
+            )
+            await hass.async_block_till_done()
+            assert mock.call_args_list == [
+                call(
+                    coordinator.lock_id,
+                    seconds=attrs["seconds"],
+                )
+            ]
