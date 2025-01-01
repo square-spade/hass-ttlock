@@ -1,6 +1,6 @@
 """Dummy data for tests."""
 
-LOCK_DETAILS = {
+BASIC_LOCK_DETAILS = {
     "date": 1669690212000,
     "lockAlias": "Front Door",
     "lockSound": 2,
@@ -44,8 +44,9 @@ LOCK_DETAILS = {
     "sensitivity": -1,
 }
 
-LOCK_STATE_LOCKED = {"state": 0}
-LOCK_STATE_UNLOCKED = {"state": 1}
+LOCK_STATE_LOCKED = {"state": 0, "electricQuantity": 90, "lockTime": 1621459200000}
+
+LOCK_STATE_UNLOCKED = {"state": 1, "electricQuantity": 90, "lockTime": 1621459200000}
 
 PASSAGE_MODE_6_TO_6_7_DAYS = {
     "autoUnlock": 2,
@@ -64,8 +65,8 @@ PASSAGE_MODE_ALL_DAY_WEEKDAYS = {
 }
 
 WEBHOOK_LOCK_10AM_UTC = {
-    "lockId": LOCK_DETAILS["lockId"],
-    "lockMac": LOCK_DETAILS["lockMac"],
+    "lockId": BASIC_LOCK_DETAILS["lockId"],
+    "lockMac": BASIC_LOCK_DETAILS["lockMac"],
     "electricQuantity": 40,
     "serverDate": 1682244497000,
     "lockDate": 1682244497000,
@@ -75,8 +76,8 @@ WEBHOOK_LOCK_10AM_UTC = {
 }
 
 WEBHOOK_UNLOCK_10AM_UTC = {
-    "lockId": LOCK_DETAILS["lockId"],
-    "lockMac": LOCK_DETAILS["lockMac"],
+    "lockId": BASIC_LOCK_DETAILS["lockId"],
+    "lockMac": BASIC_LOCK_DETAILS["lockMac"],
     "electricQuantity": 40,
     "serverDate": 1682244497000,
     "lockDate": 1682244497000,
