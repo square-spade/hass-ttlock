@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import call, patch
 
 import pytest
+from dateutil import tz
 
 from custom_components.ttlock.const import (
     DOMAIN,
@@ -23,13 +24,14 @@ class Test_list_passcodes:
         mock_api_responses("default")
         coordinator = await component_setup()
 
+        utc = tz.UTC
         passcode = Passcode(
             keyboardPwdId=123,
             keyboardPwdType=PasscodeType.temporary,
             keyboardPwdName="Test Code",
             keyboardPwd="123456",
-            startDate=1704067200000,  # 2024-01-01
-            endDate=1735689600000,  # 2024-12-31
+            startDate=int(dt.utc_from_timestamp(1704067200).timestamp() * 1000),  # 2024-01-01
+            endDate=int(dt.utc_from_timestamp(1735689600).timestamp() * 1000),  # 2024-12-31
         )
 
         with patch(
