@@ -16,7 +16,9 @@ from homeassistant.util import dt
 
 
 class Test_list_passcodes:
-    async def test_list_passcodes(self, hass: HomeAssistant, component_setup, mock_api_responses):
+    async def test_list_passcodes(
+        self, hass: HomeAssistant, component_setup, mock_api_responses
+    ):
         """Test list_passcodes service."""
         mock_api_responses("default")
         coordinator = await component_setup()
@@ -59,7 +61,9 @@ class Test_list_passcodes:
             }
         }
 
-    async def test_list_passcodes_no_results(self, hass: HomeAssistant, component_setup, mock_api_responses):
+    async def test_list_passcodes_no_results(
+        self, hass: HomeAssistant, component_setup, mock_api_responses
+    ):
         """Test list_passcodes service with no passcodes."""
         mock_api_responses("default")
         coordinator = await component_setup()
