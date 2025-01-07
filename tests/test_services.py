@@ -30,8 +30,8 @@ class Test_list_passcodes:
             keyboardPwdType=PasscodeType.temporary,
             keyboardPwdName="Test Code",
             keyboardPwd="123456",
-            startDate=int(dt.utc_from_timestamp(1704067200).timestamp() * 1000),  # 2024-01-01
-            endDate=int(dt.utc_from_timestamp(1735689600).timestamp() * 1000),  # 2024-12-31
+            startDate=dt.now() - timedelta(days=1),
+            endDate=dt.now() + timedelta(weeks=2),
         )
 
         with patch(
@@ -55,8 +55,8 @@ class Test_list_passcodes:
                         "name": "Test Code",
                         "passcode": "123456",
                         "type": "temporary",
-                        "start_date": "2024-01-01T00:00:00+00:00",
-                        "end_date": "2024-12-31T00:00:00+00:00",
+                        "start_date": passcode.start_date.timestamp() *1000,
+                        "end_date": passcode.end_date.timestamp() *1000,
                         "expired": False,
                     }
                 ]

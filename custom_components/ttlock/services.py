@@ -122,8 +122,8 @@ class Services:
                     "name": code.name,
                     "passcode": code.passcode,
                     "type": code.type.name,
-                    "start_date": code.start_date.isoformat(),
-                    "end_date": code.end_date.isoformat(),
+                    "start_date": code.start_date,
+                    "end_date": code.end_date,
                     "expired": code.expired,
                 }
                 for code in codes
