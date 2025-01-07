@@ -25,7 +25,7 @@ from .const import (
     SVC_CLEANUP_PASSCODES,
     SVC_CONFIG_PASSAGE_MODE,
     SVC_CREATE_PASSCODE,
-    SVC_LIST_PASSCODES,    
+    SVC_LIST_PASSCODES,
 )
 from .coordinator import LockUpdateCoordinator, coordinator_for
 from .models import AddPasscodeConfig, OnOff, PassageModeConfig
@@ -42,7 +42,6 @@ class Services:
 
     def register(self) -> None:
         """Register services for ttlock integration."""
-        
         # List passcodes service
         self.hass.services.register(
             DOMAIN,
@@ -54,7 +53,7 @@ class Services:
                 }
             ),
             supports_response=SupportsResponse.OPTIONAL,
-        )        
+        )
 
         self.hass.services.register(
             DOMAIN,
@@ -111,6 +110,25 @@ class Services:
                 if coordinator
             ]
         return []
+    async def handle_list_passcodes(self, call: ServiceCall) -> ServiceResponse:
+        """List all passcodes for the given entities."""
+        passcodes = {}
+
+        for coordinator in self._get_coordinators(call):
+            codes = await coordinator.api.list_passcodes(coordinator.lock_id)
+            passcodes[coordinator.data.name] = [
+                {
+                    "name": code.name,
+                    "passcode": code.passcode,
+                    "type": code.type.name,
+                    "start_date": code.start_date.isoformat(),
+                    "end_date": code.end_date.isoformat(),
+                    "expired": code.expired,
+                }
+                for code in codes
+            ]
+
+        return {"passcodes": passcodes}
 
     async def handle_configure_passage_mode(self, call: ServiceCall):
         """Enable passage mode for the given entities."""
@@ -167,23 +185,3 @@ class Services:
                     removed.append(code.name)
 
         return {"removed": removed}
-    
-    async def handle_list_passcodes(self, call: ServiceCall) -> ServiceResponse:
-        """List all passcodes for the given entities."""
-        passcodes = {}
-
-        for coordinator in self._get_coordinators(call):
-            codes = await coordinator.api.list_passcodes(coordinator.lock_id)
-            passcodes[coordinator.data.name] = [
-                {
-                    "name": code.name,
-                    "passcode": code.passcode,                    
-                    "type": code.type.name,
-                    "start_date": code.start_date.isoformat(),
-                    "end_date": code.end_date.isoformat(),
-                    "expired": code.expired,
-                }
-                for code in codes
-            ]
-
-        return {"passcodes": passcodes}    
