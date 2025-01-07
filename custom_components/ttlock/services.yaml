@@ -116,3 +116,20 @@ cleanup_passcodes:
     entity:
       integration: ttlock
       domain: lock
+list_passcodes:
+  name: List passcodes
+  description: Lists all passcodes for the selected lock, including their names, codes, and validity periods.
+  target:
+    entity:
+      integration: ttlock
+      domain: lock
+  response:
+    example:
+      passcodes:
+        Front Door:
+          - name: "Cleaner"
+            passcode: "123456"
+            type: "temporary"
+            start_date: "2024-01-01T09:00:00"
+            end_date: "2024-12-31T17:00:00"
+            expired: false
