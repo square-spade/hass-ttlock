@@ -25,7 +25,6 @@ class Test_list_passcodes:
 
         start_time = dt.now() - timedelta(days=1)
         end_time = dt.now() + timedelta(weeks=2)
-        
         passcode = Passcode(
             keyboardPwdId=123,
             keyboardPwdType=PasscodeType.temporary,
