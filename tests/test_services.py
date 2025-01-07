@@ -24,14 +24,16 @@ class Test_list_passcodes:
         mock_api_responses("default")
         coordinator = await component_setup()
 
-        utc = tz.UTC
+        start_time = dt.now() - timedelta(days=1)
+        end_time = dt.now() + timedelta(weeks=2)
+        
         passcode = Passcode(
             keyboardPwdId=123,
             keyboardPwdType=PasscodeType.temporary,
             keyboardPwdName="Test Code",
             keyboardPwd="123456",
-            startDate=dt.now() - timedelta(days=1),
-            endDate=dt.now() + timedelta(weeks=2),
+            startDate=int(start_time.timestamp() * 1000),
+            endDate=int(end_time.timestamp() * 1000)           
         )
 
         with patch(
@@ -55,8 +57,8 @@ class Test_list_passcodes:
                         "name": "Test Code",
                         "passcode": "123456",
                         "type": "temporary",
-                        "start_date": passcode.start_date.timestamp() *1000,
-                        "end_date": passcode.end_date.timestamp() *1000,
+                        "start_date": passcode.start_date,
+                        "end_date": passcode.end_date,
                         "expired": False,
                     }
                 ]
