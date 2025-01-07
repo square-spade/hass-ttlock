@@ -110,6 +110,7 @@ class Services:
                 if coordinator
             ]
         return []
+
     async def handle_list_passcodes(self, call: ServiceCall) -> ServiceResponse:
         """List all passcodes for the given entities."""
         passcodes = {}
