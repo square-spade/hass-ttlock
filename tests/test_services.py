@@ -2,7 +2,6 @@ from datetime import timedelta
 from unittest.mock import call, patch
 
 import pytest
-from dateutil import tz
 
 from custom_components.ttlock.const import (
     DOMAIN,
@@ -33,7 +32,7 @@ class Test_list_passcodes:
             keyboardPwdName="Test Code",
             keyboardPwd="123456",
             startDate=int(start_time.timestamp() * 1000),
-            endDate=int(end_time.timestamp() * 1000)           
+            endDate=int(end_time.timestamp() * 1000),
         )
 
         with patch(
