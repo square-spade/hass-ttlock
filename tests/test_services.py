@@ -1,3 +1,4 @@
+"""Test the TTLock services."""
 from datetime import timedelta
 from unittest.mock import call, patch
 
@@ -8,7 +9,7 @@ from custom_components.ttlock.const import (
     SVC_CLEANUP_PASSCODES,
     SVC_CREATE_PASSCODE,
     SVC_LIST_PASSCODES,
-    SVC_LIST_RECORDS
+    SVC_LIST_RECORDS,
 )
 from custom_components.ttlock.models import (
     AddPasscodeConfig,
@@ -94,6 +95,8 @@ class Test_list_passcodes:
             assert mock.called
 
         assert response == {"passcodes": {entity_id: []}}
+
+
 
 class Test_list_records:
     async def test_list_records(
@@ -236,6 +239,8 @@ class Test_list_records:
             assert kwargs["pageNo"] == 2
             assert kwargs["pageSize"] == 100
 
+
+
 class Test_create_passcode:
     async def test_can_create_passcode(
         self, hass: HomeAssistant, component_setup, mock_api_responses
@@ -281,7 +286,7 @@ class Test_cleanup_passcodes:
     async def test_works_when_there_is_nothing_to_do(
         self, hass: HomeAssistant, component_setup, mock_api_responses, return_response
     ) -> None:
-        """Test get schedule service."""
+        """Test cleanup service with no passcodes."""
         mock_api_responses("default")
         coordinator = await component_setup()
         entity_id = coordinator.entities[0].entity_id
@@ -305,10 +310,7 @@ class Test_cleanup_passcodes:
             assert response is None
 
     async def test_works_when_there_is_an_expired_passcode(
-        self,
-        hass: HomeAssistant,
-        component_setup,
-        mock_api_responses,
+        self, hass: HomeAssistant, component_setup, mock_api_responses
     ) -> None:
         """Test cleanup service with an expired passcode."""
         mock_api_responses("default")

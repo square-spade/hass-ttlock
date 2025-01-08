@@ -160,3 +160,4 @@ list_records:
       selector:
         number:
           min: 1
+          max: 10

@@ -21,6 +21,7 @@ from .models import (
     LockState,
     PassageModeConfig,
     Passcode,
+    LockRecord,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -262,3 +263,29 @@ class TTLockApi:
             return False
 
         return True
+    
+    async def get_lock_records(
+        self,
+        lock_id: int,
+        start_date: int | None = None,
+        end_date: int | None = None,
+        page_no: int = 1,
+        page_size: int = 20,
+    ) -> list[LockRecord]:
+        """Get the operation records for a lock."""
+        params = {
+            "lockId": lock_id,
+            "pageNo": page_no,
+            "pageSize": min(page_size, 200),
+            "date": str(round(time.time() * 1000)),
+        }
+
+        if start_date is not None:
+            params["startDate"] = start_date
+        if end_date is not None:
+            params["endDate"] = end_date
+
+        res = await self.get("lockRecord/list", **params)
+        
+        # Serialize each record to ensure datetime objects are handled
+        return [LockRecord.parse_obj(record) for record in res["list"]]
