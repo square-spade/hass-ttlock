@@ -3,6 +3,7 @@
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum, IntEnum, IntFlag, auto
+from typing import Optional
 
 try:
     from pydantic.v1 import BaseModel, Field, validator
@@ -10,7 +11,6 @@ except ImportError:
     from pydantic import BaseModel, Field, validator
 
 from homeassistant.util import dt
-from typing import Optional
 
 
 class EpochMs(datetime):
@@ -136,11 +136,68 @@ class Passcode(BaseModel):
     
 class RecordType(IntEnum):
     """Type of lock record."""
-    KEYBOARD = 4
-    IC_CARD = 7
-    FINGERPRINT = 8
-    REMOTE = 55
+    BLUETOOTH_UNLOCK = 1
+    PASSWORD_UNLOCK = 4
+    PARKING_LOCK = 5
+    PARKING_SPACE_LOCK_AND_LOWERING = 6
+    IC_CARD_UNLOCK = 7
+    FINGERPRINT_UNLOCK = 8
+    BRACELET_UNLOCK = 9
+    MECHANICAL_KEY_UNLOCK = 10
+    BLUETOOTH_LOCK = 11
+    GATEWAY_UNLOCK = 12
+    ILLEGAL_UNLOCKING = 29
+    DOOR_MAGNET_CLOSED = 30
+    DOOR_SENSOR_OPEN = 31
+    OPEN_DOOR_FROM_INSIDE = 32
+    FINGERPRINT_LOCK = 33
+    PASSWORD_LOCK = 34
+    IC_CARD_LOCK = 35
+    MECHANICAL_KEY_LOCK = 36
+    APP_BUTTON_CONTROL = 37
+    POST_OFFICE_LOCAL_MAIL = 42
+    POST_OFFICE_OUT_OF_TOWN_MAIL = 43
+    ANTI_THEFT_ALARM = 44
+    AUTOMATIC_LOCK_TIMEOUT = 45
+    UNLOCK_BUTTON = 46
+    LOCK_BUTTON = 47
     SYSTEM_LOCKED = 48
+    HOTEL_CARD_UNLOCK = 49
+    HIGH_TEMPERATURE_UNLOCK = 50
+    DELETED_CARD_UNLOCK = 51
+    LOCK_WITH_APP = 52
+    LOCK_WITH_PASSWORD = 53
+    CAR_LEAVES = 54
+    REMOTE_CONTROL = 55
+    QR_CODE_UNLOCK_SUCCESS = 57
+    QR_CODE_UNLOCK_FAILED_EXPIRED = 58
+    OPEN_ANTI_LOCK = 59
+    CLOSE_ANTI_LOCK = 60
+    QR_CODE_LOCK_SUCCESS = 61
+    QR_CODE_UNLOCK_FAILED_LOCKED = 62
+    AUTOMATIC_UNLOCKING_NORMAL_OPEN_TIME = 63
+    DOOR_NOT_CLOSED_ALARM = 64
+    UNLOCK_TIMEOUT = 65
+    LOCKOUT_TIMEOUT = 66
+    THREE_D_FACE_UNLOCK_SUCCESS = 67
+    THREE_D_FACE_UNLOCK_FAILED_LOCKED = 68
+    THREE_D_FACE_LOCK = 69
+    THREE_D_FACE_RECOGNITION_FAILED_EXPIRED = 71
+    APP_AUTHORIZATION_BUTTON_UNLOCK_SUCCESS = 75
+    GATEWAY_AUTHORIZATION_KEY_UNLOCK_SUCCESS = 76
+    DUAL_AUTHENTICATION_BLUETOOTH_UNLOCK_SUCCESS = 77
+    DUAL_AUTHENTICATION_PASSWORD_UNLOCK_SUCCESS = 78
+    DUAL_AUTHENTICATION_FINGERPRINT_UNLOCK_SUCCESS = 79
+    DUAL_AUTHENTICATION_IC_CARD_UNLOCK_SUCCESS = 80
+    DUAL_AUTHENTICATION_FACE_CARD_UNLOCK_SUCCESS = 81
+    DUAL_AUTHENTICATION_REMOTE_UNLOCK_SUCCESS = 82
+    DUAL_AUTHENTICATION_PALM_VEIN_UNLOCK_SUCCESS = 83
+    PALM_VEIN_UNLOCK_SUCCESS = 84
+    PALM_VEIN_UNLOCK_FAILED_LOCKED = 85
+    PALM_VEIN_ATRESIA = 86
+    PALM_VEIN_OPENING_FAILED_EXPIRED = 88
+    IC_CARD_UNLOCK_FAILED = 91
+    ADMINISTRATOR_PASSWORD_UNLOCK = 92
 
 class LockRecord(BaseModel):
     """A single record entry from a lock."""
@@ -150,7 +207,7 @@ class LockRecord(BaseModel):
     record_type_from_lock: int = Field(None, alias="recordTypeFromLock")
     record_type: RecordType = Field(None, alias="recordType")
     success: bool
-    username: Optional[str] = None 
+    username: Optional[str] = None
     keyboard_pwd: str | None = Field(None, alias="keyboardPwd")
     lock_date: EpochMs = Field(None, alias="lockDate")
     server_date: EpochMs = Field(None, alias="serverDate")
