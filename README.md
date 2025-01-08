@@ -17,6 +17,8 @@ This integration uses the TTLock Cloud to communicate with your lock. It support
 - Additional sensors for battery, last operator + reason
 - Add new pass codes
 - Delete expired pass codes
+- List passcodes
+- List records history (lock, unlock etc)
 
 ## Known working locks
 
