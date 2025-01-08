@@ -73,6 +73,9 @@ This integration uses the TTLock Cloud to communicate with your lock. It support
 
 When reporting issues, please attach the diagnostic information and consider enabling debug logging to provide extra information.
 
+## Development
+You can find all the TTLock API calls here [here]https://euopen.ttlock.com/document
+
 # Say thanks
 
 If you found this helpful and you'd like to say thanks you can do so via buy me a coffee or a beer.
