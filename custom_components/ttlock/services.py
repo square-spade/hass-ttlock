@@ -152,7 +152,7 @@ class Services:
             weekDays=days,
         )
 
-        for entity_id, coordinator in self._get_coordinators(call):
+        for _entity_id, coordinator in self._get_coordinators(call):
             if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
                 coordinator.data.passage_mode_config = config
                 coordinator.async_update_listeners()
