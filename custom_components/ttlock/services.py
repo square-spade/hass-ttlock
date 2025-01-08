@@ -103,6 +103,7 @@ class Services:
         self, call: ServiceCall
     ) -> list[tuple[str, LockUpdateCoordinator]]:
         """Get coordinators for the requested entities.
+
         Returns list of (entity_id, coordinator) tuples.
         """
         entity_ids = call.data.get(ATTR_ENTITY_ID)
