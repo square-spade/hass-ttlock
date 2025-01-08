@@ -18,7 +18,7 @@ from .models import (
     AddPasscodeConfig,
     Features,
     Lock,
-    LockRecord,    
+    LockRecord,
     LockState,
     PassageModeConfig,
     Passcode,

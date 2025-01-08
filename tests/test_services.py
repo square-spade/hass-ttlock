@@ -216,9 +216,9 @@ class Test_list_records:
         mock_api_responses("default")
         coordinator = await component_setup()
         entity_id = coordinator.entities[0].entity_id
-        
+
         start_time = dt.now() - timedelta(days=1)
-        end_time = dt.now()        
+        end_time = dt.now()
 
         with patch(
             "custom_components.ttlock.api.TTLockApi.get_lock_records",
@@ -232,7 +232,7 @@ class Test_list_records:
                     "page_no": 2,
                     "page_size": 100,
                     "start_date": start_time,
-                    "end_date": end_time,                    
+                    "end_date": end_time,
                 },
                 blocking=True,
                 return_response=True,
@@ -241,10 +241,9 @@ class Test_list_records:
 
             kwargs = mock.call_args[1]
             assert kwargs["start_date"] == int(start_time.timestamp() * 1000)
-            assert kwargs["end_date"] == int(end_time.timestamp() * 1000)            
+            assert kwargs["end_date"] == int(end_time.timestamp() * 1000)
             assert kwargs["page_no"] == 2
             assert kwargs["page_size"] == 100
-
 
 
 class Test_create_passcode:

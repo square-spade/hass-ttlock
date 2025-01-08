@@ -13,7 +13,7 @@ from custom_components.ttlock.const import DOMAIN, TT_LOCKS
 from custom_components.ttlock.coordinator import LockUpdateCoordinator
 from custom_components.ttlock.models import (
     Lock,
-    LockRecord,    
+    LockRecord,
     LockState,
     PassageModeConfig,
 )
@@ -161,7 +161,7 @@ def mock_api_responses(monkeypatch, mock_data_factory):
 
         async def mock_get_passage_mode(*args, **kwargs):
             return mock_data.passage_mode
-        
+
         async def mock_get_lock_records(*args, **kwargs):
             return []
 
