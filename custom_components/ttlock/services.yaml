@@ -123,3 +123,40 @@ list_passcodes:
     entity:
       integration: ttlock
       domain: lock
+list_records:
+  name: List lock records
+  description: Lists operation records for the selected lock.
+  target:
+    entity:
+      integration: ttlock
+      domain: lock
+  fields:
+    start_date:
+      name: Start date
+      description: Start date for record search (optional)
+      required: false
+      selector:
+        datetime:
+    end_date:
+      name: End date
+      description: End date for record search (optional)
+      required: false
+      selector:
+        datetime:
+    page_size:
+      name: Page size
+      description: Number of records to return (default 100, max 200)
+      required: false
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 200
+    page_no:
+      name: Page number
+      description: Page number to return (default 1)
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1

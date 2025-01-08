@@ -10,6 +10,7 @@ except ImportError:
     from pydantic import BaseModel, Field, validator
 
 from homeassistant.util import dt
+from typing import Optional
 
 
 class EpochMs(datetime):
@@ -132,6 +133,27 @@ class Passcode(BaseModel):
 
         # Assume not
         return False
+    
+class RecordType(IntEnum):
+    """Type of lock record."""
+    KEYBOARD = 4
+    IC_CARD = 7
+    FINGERPRINT = 8
+    REMOTE = 55
+    SYSTEM_LOCKED = 48
+
+class LockRecord(BaseModel):
+    """A single record entry from a lock."""
+
+    id: int = Field(None, alias="recordId")
+    lock_id: int = Field(None, alias="lockId")
+    record_type_from_lock: int = Field(None, alias="recordTypeFromLock")
+    record_type: RecordType = Field(None, alias="recordType")
+    success: bool
+    username: Optional[str] = None 
+    keyboard_pwd: str | None = Field(None, alias="keyboardPwd")
+    lock_date: EpochMs = Field(None, alias="lockDate")
+    server_date: EpochMs = Field(None, alias="serverDate")
 
 
 class AddPasscodeConfig(BaseModel):
