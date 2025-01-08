@@ -99,9 +99,10 @@ class Services:
             supports_response=SupportsResponse.ONLY,
         )
 
-    def _get_coordinators(self, call: ServiceCall) -> list[tuple[str, LockUpdateCoordinator]]:
+    def _get_coordinators(
+        self, call: ServiceCall
+    ) -> list[tuple[str, LockUpdateCoordinator]]:
         """Get coordinators for the requested entities.
-        
         Returns list of (entity_id, coordinator) tuples.
         """
         entity_ids = call.data.get(ATTR_ENTITY_ID)
@@ -120,13 +121,13 @@ class Services:
         """List all passcodes for the selected locks."""
         passcodes = {}
 
-        for entity_id, coordinator in self._get_coordinators(call):
+        for _entity_id, coordinator in self._get_coordinators(call):
             codes = await coordinator.api.list_passcodes(coordinator.lock_id)
-            passcodes[entity_id] = [
+            passcodes[_entity_id] = [
                 {
                     "name": code.name,
                     "passcode": code.passcode,
-                    "type": code.type.value,
+                    "type": code.type.name,
                     "start_date": code.start_date,
                     "end_date": code.end_date,
                     "expired": code.expired,
@@ -174,7 +175,7 @@ class Services:
             endDate=end_time,
         )
 
-        for entity_id, coordinator in self._get_coordinators(call):
+        for _entity_id, coordinator in self._get_coordinators(call):
             await coordinator.api.add_passcode(coordinator.lock_id, config)
 
     async def handle_cleanup_passcodes(self, call: ServiceCall) -> ServiceResponse:
@@ -186,7 +187,9 @@ class Services:
             codes = await coordinator.api.list_passcodes(coordinator.lock_id)
             for code in codes:
                 if code.expired:
-                    if await coordinator.api.delete_passcode(coordinator.lock_id, code.id):
+                    if await coordinator.api.delete_passcode(
+                        coordinator.lock_id, code.id
+                    ):
                         removed_for_lock.append(code.name)
             if removed_for_lock:
                 removed[entity_id] = removed_for_lock
