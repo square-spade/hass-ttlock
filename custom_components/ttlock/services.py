@@ -227,6 +227,7 @@ class Services:
                 removed[entity_id] = removed_for_lock
 
         return {"removed": removed}
+
     async def handle_list_records(self, call: ServiceCall) -> ServiceResponse:
         """List records for the selected locks."""
         records = {}

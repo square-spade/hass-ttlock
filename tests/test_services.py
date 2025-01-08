@@ -97,7 +97,6 @@ class Test_list_passcodes:
         assert response == {"passcodes": {entity_id: []}}
 
 
-
 class Test_list_records:
     async def test_list_records(
         self, hass: HomeAssistant, component_setup, mock_api_responses
@@ -110,7 +109,7 @@ class Test_list_records:
         record = LockRecord(
             recordId=123,
             lockId=15450395,
-            recordType=RecordType.KEYBOARD,
+            recordType=RecordType.PASSWORD_UNLOCK,
             recordTypeFromLock=7,
             success=False,
             username="test",
@@ -205,10 +204,10 @@ class Test_list_records:
 
             # Verify that timestamps were correctly converted
             kwargs = mock.call_args[1]
-            assert kwargs["startDate"] == int(start_time.timestamp() * 1000)
-            assert kwargs["endDate"] == int(end_time.timestamp() * 1000)
-            assert kwargs["pageNo"] == 1
-            assert kwargs["pageSize"] == 50
+            assert kwargs["start_date"] == int(start_time.timestamp() * 1000)
+            assert kwargs["end_date"] == int(end_time.timestamp() * 1000)
+            assert kwargs["page_no"] == 1
+            assert kwargs["page_size"] == 50
 
     async def test_list_records_with_pagination(
         self, hass: HomeAssistant, component_setup, mock_api_responses
@@ -217,6 +216,9 @@ class Test_list_records:
         mock_api_responses("default")
         coordinator = await component_setup()
         entity_id = coordinator.entities[0].entity_id
+        
+        start_time = dt.now() - timedelta(days=1)
+        end_time = dt.now()        
 
         with patch(
             "custom_components.ttlock.api.TTLockApi.get_lock_records",
@@ -229,6 +231,8 @@ class Test_list_records:
                     ATTR_ENTITY_ID: entity_id,
                     "page_no": 2,
                     "page_size": 100,
+                    "start_date": start_time,
+                    "end_date": end_time,                    
                 },
                 blocking=True,
                 return_response=True,
@@ -236,8 +240,10 @@ class Test_list_records:
             await hass.async_block_till_done()
 
             kwargs = mock.call_args[1]
-            assert kwargs["pageNo"] == 2
-            assert kwargs["pageSize"] == 100
+            assert kwargs["start_date"] == int(start_time.timestamp() * 1000)
+            assert kwargs["end_date"] == int(end_time.timestamp() * 1000)            
+            assert kwargs["page_no"] == 2
+            assert kwargs["page_size"] == 100
 
 
 

@@ -133,9 +133,11 @@ class Passcode(BaseModel):
 
         # Assume not
         return False
-    
+
+
 class RecordType(IntEnum):
     """Type of lock record."""
+
     BLUETOOTH_UNLOCK = 1
     PASSWORD_UNLOCK = 4
     PARKING_LOCK = 5
@@ -198,6 +200,7 @@ class RecordType(IntEnum):
     PALM_VEIN_OPENING_FAILED_EXPIRED = 88
     IC_CARD_UNLOCK_FAILED = 91
     ADMINISTRATOR_PASSWORD_UNLOCK = 92
+
 
 class LockRecord(BaseModel):
     """A single record entry from a lock."""

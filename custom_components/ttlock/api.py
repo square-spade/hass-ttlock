@@ -18,10 +18,10 @@ from .models import (
     AddPasscodeConfig,
     Features,
     Lock,
+    LockRecord,    
     LockState,
     PassageModeConfig,
     Passcode,
-    LockRecord,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -263,7 +263,7 @@ class TTLockApi:
             return False
 
         return True
-    
+
     async def get_lock_records(
         self,
         lock_id: int,
@@ -286,6 +286,6 @@ class TTLockApi:
             params["endDate"] = end_date
 
         res = await self.get("lockRecord/list", **params)
-        
+
         # Serialize each record to ensure datetime objects are handled
         return [LockRecord.parse_obj(record) for record in res["list"]]
