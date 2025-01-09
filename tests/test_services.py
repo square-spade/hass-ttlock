@@ -7,6 +7,7 @@ from custom_components.ttlock.const import (
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
     SVC_CREATE_PASSCODE,
+    SVC_LIST_PASSCODES,
 )
 from custom_components.ttlock.models import AddPasscodeConfig, Passcode, PasscodeType
 from homeassistant.const import ATTR_ENTITY_ID
@@ -14,12 +15,88 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt
 
 
+class Test_list_passcodes:
+    async def test_list_passcodes(
+        self, hass: HomeAssistant, component_setup, mock_api_responses
+    ):
+        """Test list_passcodes service."""
+        mock_api_responses("default")
+        coordinator = await component_setup()
+        entity_id = coordinator.entities[0].entity_id
+
+        start_time = dt.now() - timedelta(days=1)
+        end_time = dt.now() + timedelta(weeks=2)
+        passcode = Passcode(
+            keyboardPwdId=123,
+            keyboardPwdType=PasscodeType.temporary,
+            keyboardPwdName="Test Code",
+            keyboardPwd="123456",
+            startDate=int(start_time.timestamp() * 1000),
+            endDate=int(end_time.timestamp() * 1000),
+        )
+
+        with patch(
+            "custom_components.ttlock.api.TTLockApi.list_passcodes",
+            return_value=[passcode],
+        ) as mock:
+            response = await hass.services.async_call(
+                DOMAIN,
+                SVC_LIST_PASSCODES,
+                {ATTR_ENTITY_ID: entity_id},
+                blocking=True,
+                return_response=True,
+            )
+            await hass.async_block_till_done()
+            assert mock.called
+
+        assert response == {
+            "passcodes": {
+                entity_id: [
+                    {
+                        "name": "Test Code",
+                        "passcode": "123456",
+                        "type": "temporary",
+                        "start_date": passcode.start_date,
+                        "end_date": passcode.end_date,
+                        "expired": False,
+                    }
+                ]
+            }
+        }
+
+    async def test_list_passcodes_no_results(
+        self, hass: HomeAssistant, component_setup, mock_api_responses
+    ):
+        """Test list_passcodes service with no passcodes."""
+        mock_api_responses("default")
+        coordinator = await component_setup()
+        entity_id = coordinator.entities[0].entity_id
+
+        with patch(
+            "custom_components.ttlock.api.TTLockApi.list_passcodes",
+            return_value=[],
+        ) as mock:
+            response = await hass.services.async_call(
+                DOMAIN,
+                SVC_LIST_PASSCODES,
+                {ATTR_ENTITY_ID: entity_id},
+                blocking=True,
+                return_response=True,
+            )
+            await hass.async_block_till_done()
+            assert mock.called
+
+        assert response == {"passcodes": {entity_id: []}}
+
+
 class Test_create_passcode:
     async def test_can_create_passcode(
         self, hass: HomeAssistant, component_setup, mock_api_responses
     ):
+        """Test creating a passcode."""
         mock_api_responses("default")
         coordinator = await component_setup()
+        entity_id = coordinator.entities[0].entity_id
 
         attrs = {
             "passcode_name": "Test User",
@@ -34,7 +111,7 @@ class Test_create_passcode:
                 DOMAIN,
                 SVC_CREATE_PASSCODE,
                 {
-                    ATTR_ENTITY_ID: coordinator.entities[0].entity_id,
+                    ATTR_ENTITY_ID: entity_id,
                     **attrs,
                 },
             )
@@ -45,8 +122,8 @@ class Test_create_passcode:
                     AddPasscodeConfig(
                         passcode=attrs["passcode"],
                         passcodeName=attrs["passcode_name"],
-                        startDate=attrs["start_time"].timestamp() * 1000,
-                        endDate=attrs["end_time"].timestamp() * 1000,
+                        startDate=int(attrs["start_time"].timestamp() * 1000),
+                        endDate=int(attrs["end_time"].timestamp() * 1000),
                     ),
                 )
             ]
@@ -60,6 +137,7 @@ class Test_cleanup_passcodes:
         """Test get schedule service."""
         mock_api_responses("default")
         coordinator = await component_setup()
+        entity_id = coordinator.entities[0].entity_id
 
         with patch(
             "custom_components.ttlock.api.TTLockApi.list_passcodes", return_value=[]
@@ -67,7 +145,7 @@ class Test_cleanup_passcodes:
             response = await hass.services.async_call(
                 DOMAIN,
                 SVC_CLEANUP_PASSCODES,
-                {ATTR_ENTITY_ID: coordinator.entities[0].entity_id},
+                {ATTR_ENTITY_ID: entity_id},
                 blocking=True,
                 return_response=return_response,
             )
@@ -75,7 +153,7 @@ class Test_cleanup_passcodes:
             assert mock.called
 
         if return_response:
-            assert response == {"removed": []}
+            assert response == {"removed": {}}
         else:
             assert response is None
 
@@ -85,9 +163,10 @@ class Test_cleanup_passcodes:
         component_setup,
         mock_api_responses,
     ) -> None:
-        """Test get schedule service."""
+        """Test cleanup service with an expired passcode."""
         mock_api_responses("default")
         coordinator = await component_setup()
+        entity_id = coordinator.entities[0].entity_id
 
         with patch(
             "custom_components.ttlock.api.TTLockApi.list_passcodes",
@@ -105,11 +184,11 @@ class Test_cleanup_passcodes:
             response = await hass.services.async_call(
                 DOMAIN,
                 SVC_CLEANUP_PASSCODES,
-                {ATTR_ENTITY_ID: coordinator.entities[0].entity_id},
+                {ATTR_ENTITY_ID: entity_id},
                 blocking=True,
                 return_response=True,
             )
             await hass.async_block_till_done()
             assert mock.call_args_list == [call(coordinator.lock_id, 123)]
 
-        assert response == {"removed": ["Test"]}
+        assert response == {"removed": {entity_id: ["Test"]}}

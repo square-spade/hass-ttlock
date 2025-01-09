@@ -116,3 +116,10 @@ cleanup_passcodes:
     entity:
       integration: ttlock
       domain: lock
+list_passcodes:
+  name: List passcodes
+  description: Lists all passcodes for the selected lock, including their names, codes, and validity periods.
+  target:
+    entity:
+      integration: ttlock
+      domain: lock
