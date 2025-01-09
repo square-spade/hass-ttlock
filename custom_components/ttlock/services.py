@@ -101,30 +101,34 @@ class Services:
 
     def _get_coordinators(
         self, call: ServiceCall
-    ) -> list[tuple[str, LockUpdateCoordinator]]:
+    ) -> dict[str, LockUpdateCoordinator]:
         """Get coordinators for the requested entities.
+        Returns a dictionary mapping entity_ids to their coordinators.
+        Filters out any entity_ids that don't have associated coordinators.
 
-        Returns list of (entity_id, coordinator) tuples.
+        Args:
+            call: The service call containing entity_ids
+
+        Returns:
+            A dictionary where keys are entity_ids and values are their corresponding
+            LockUpdateCoordinators. Only includes entries where a coordinator exists.
         """
         entity_ids = call.data.get(ATTR_ENTITY_ID)
         if entity_ids:
-            return [
-                (entity_id, coordinator)
-                for entity_id, coordinator in [
-                    (entity_id, coordinator_for(self.hass, entity_id))
-                    for entity_id in entity_ids
-                ]
-                if coordinator
-            ]
-        return []
+            return {
+                entity_id: coordinator
+                for entity_id in entity_ids
+                if (coordinator := coordinator_for(self.hass, entity_id))
+            }
+        return {}
 
     async def handle_list_passcodes(self, call: ServiceCall) -> ServiceResponse:
         """List all passcodes for the selected locks."""
         passcodes = {}
 
-        for _entity_id, coordinator in self._get_coordinators(call):
+        for entity_id, coordinator in self._get_coordinators(call).items():
             codes = await coordinator.api.list_passcodes(coordinator.lock_id)
-            passcodes[_entity_id] = [
+            passcodes[entity_id] = [
                 {
                     "name": code.name,
                     "passcode": code.passcode,
@@ -153,7 +157,7 @@ class Services:
             weekDays=days,
         )
 
-        for _entity_id, coordinator in self._get_coordinators(call):
+        for entity_id, coordinator in self._get_coordinators(call).items():
             if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
                 coordinator.data.passage_mode_config = config
                 coordinator.async_update_listeners()
@@ -176,14 +180,14 @@ class Services:
             endDate=end_time,
         )
 
-        for _entity_id, coordinator in self._get_coordinators(call):
+        for entity_id, coordinator in self._get_coordinators(call).items():
             await coordinator.api.add_passcode(coordinator.lock_id, config)
 
     async def handle_cleanup_passcodes(self, call: ServiceCall) -> ServiceResponse:
         """Clean up expired passcodes for the given entities."""
         removed = {}
 
-        for entity_id, coordinator in self._get_coordinators(call):
+        for entity_id, coordinator in self._get_coordinators(call).items():
             removed_for_lock = []
             codes = await coordinator.api.list_passcodes(coordinator.lock_id)
             for code in codes:
