@@ -99,9 +99,7 @@ class Services:
             supports_response=SupportsResponse.ONLY,
         )
 
-    def _get_coordinators(
-        self, call: ServiceCall
-    ) -> dict[str, LockUpdateCoordinator]:
+    def _get_coordinators(self, call: ServiceCall) -> dict[str, LockUpdateCoordinator]:
         """Get coordinators for the requested entities.
         Returns a dictionary mapping entity_ids to their coordinators.
         Filters out any entity_ids that don't have associated coordinators.
@@ -157,7 +155,7 @@ class Services:
             weekDays=days,
         )
 
-        for entity_id, coordinator in self._get_coordinators(call).items():
+        for _entity_id, coordinator in self._get_coordinators(call).items():
             if await coordinator.api.set_passage_mode(coordinator.lock_id, config):
                 coordinator.data.passage_mode_config = config
                 coordinator.async_update_listeners()
@@ -180,7 +178,7 @@ class Services:
             endDate=end_time,
         )
 
-        for entity_id, coordinator in self._get_coordinators(call).items():
+        for _entity_id, coordinator in self._get_coordinators(call).items():
             await coordinator.api.add_passcode(coordinator.lock_id, config)
 
     async def handle_cleanup_passcodes(self, call: ServiceCall) -> ServiceResponse:
