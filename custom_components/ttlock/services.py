@@ -101,6 +101,7 @@ class Services:
 
     def _get_coordinators(self, call: ServiceCall) -> dict[str, LockUpdateCoordinator]:
         """Get coordinators for the requested entities.
+
         Returns a dictionary mapping entity_ids to their coordinators.
         Filters out any entity_ids that don't have associated coordinators.
 
