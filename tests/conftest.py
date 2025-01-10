@@ -163,7 +163,7 @@ def mock_api_responses(monkeypatch, mock_data_factory):
             return mock_data.passage_mode
 
         async def mock_get_lock_records(*args, **kwargs):
-            return []
+            return mock_data.records
 
         monkeypatch.setattr(
             "custom_components.ttlock.api.TTLockApi.get_locks", mock_get_locks
