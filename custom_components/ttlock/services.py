@@ -246,7 +246,7 @@ class Services:
         params["page_no"] = call.data.get("page_no", 1)
         params["page_size"] = min(call.data.get("page_size", 50), 200)
 
-        for entity_id, coordinator in self._get_coordinators(call):
+        for entity_id, coordinator in self._get_coordinators(call).items():
             lock_records = await coordinator.api.get_lock_records(
                 coordinator.lock_id, **params
             )

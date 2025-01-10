@@ -209,8 +209,8 @@ class LockRecord(BaseModel):
     lock_id: int = Field(None, alias="lockId")
     record_type_from_lock: int = Field(None, alias="recordTypeFromLock")
     record_type: RecordType = Field(None, alias="recordType")
-    success: bool
-    username: Optional[str] = None
+    success: bool = Field(...)
+    username: Optional[str] = Field(None)
     keyboard_pwd: str | None = Field(None, alias="keyboardPwd")
     lock_date: EpochMs = Field(None, alias="lockDate")
     server_date: EpochMs = Field(None, alias="serverDate")
