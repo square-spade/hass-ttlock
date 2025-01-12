@@ -117,6 +117,14 @@ cleanup_passcodes:
       integration: ttlock
       domain: lock
 
+list_passcodes:
+  name: List passcodes
+  description: Lists all passcodes for the selected lock, including their names, codes, and validity periods.
+  target:
+    entity:
+      integration: ttlock
+      domain: lock
+
 configure_autolock:
   name: Configure Autolock
   description: Configure Autolock of the device.

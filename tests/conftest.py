@@ -1,6 +1,7 @@
 """Global fixtures for ttlock integration."""
 
 from time import time
+from typing import NamedTuple
 from unittest.mock import patch
 
 from aiohttp import ClientSession
@@ -18,7 +19,12 @@ from homeassistant.components.application_credentials import (
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 
-from .const import LOCK_DETAILS, LOCK_STATE_UNLOCKED, PASSAGE_MODE_6_TO_6_7_DAYS
+from .const import (
+    BASIC_LOCK_DETAILS,
+    LOCK_STATE_LOCKED,
+    LOCK_STATE_UNLOCKED,
+    PASSAGE_MODE_6_TO_6_7_DAYS,
+)
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 
@@ -93,22 +99,72 @@ async def coordinator(hass, api):
     return LockUpdateCoordinator(hass, api, 7252408)
 
 
+class MockApiData(NamedTuple):
+    """Container for mock API response data."""
+
+    lock: Lock
+    state: LockState
+    passage_mode: PassageModeConfig | None
+
+
 @pytest.fixture
-def sane_default_data():
-    """Fixture for mocking sane default data from the API."""
+def mock_data_factory():
+    """Factory fixture to create different sets of mock data."""
 
-    lock = Lock.parse_obj(LOCK_DETAILS)
-    state = LockState.parse_obj(LOCK_STATE_UNLOCKED)
-    passage_mode_config = PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS)
+    def create_mock_data(scenario: str = "default") -> MockApiData:
+        scenarios = {
+            "default": MockApiData(
+                lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
+                state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
+                passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
+            ),
+            "locked": MockApiData(
+                lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
+                state=LockState.parse_obj(LOCK_STATE_LOCKED),
+                passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
+            ),
+            "no_passage_mode": MockApiData(
+                lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
+                state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
+                passage_mode=None,
+            ),
+        }
+        return scenarios[scenario]
 
-    with patch(
-        "custom_components.ttlock.api.TTLockApi.get_locks", return_value=[lock.id]
-    ), patch(
-        "custom_components.ttlock.api.TTLockApi.get_lock", return_value=lock
-    ), patch(
-        "custom_components.ttlock.api.TTLockApi.get_lock_state", return_value=state
-    ), patch(
-        "custom_components.ttlock.api.TTLockApi.get_lock_passage_mode_config",
-        return_value=passage_mode_config,
-    ):
-        yield
+    return create_mock_data
+
+
+@pytest.fixture
+def mock_api_responses(monkeypatch, mock_data_factory):
+    """Fixture for mocking TTLock API responses with configurable data."""
+
+    def create_mock_responses(scenario: str = "default"):
+        mock_data = mock_data_factory(scenario)
+
+        async def mock_get_locks(*args, **kwargs):
+            return [mock_data.lock.id]
+
+        async def mock_get_lock(*args, **kwargs):
+            return mock_data.lock
+
+        async def mock_get_lock_state(*args, **kwargs):
+            return mock_data.state
+
+        async def mock_get_passage_mode(*args, **kwargs):
+            return mock_data.passage_mode
+
+        monkeypatch.setattr(
+            "custom_components.ttlock.api.TTLockApi.get_locks", mock_get_locks
+        )
+        monkeypatch.setattr(
+            "custom_components.ttlock.api.TTLockApi.get_lock", mock_get_lock
+        )
+        monkeypatch.setattr(
+            "custom_components.ttlock.api.TTLockApi.get_lock_state", mock_get_lock_state
+        )
+        monkeypatch.setattr(
+            "custom_components.ttlock.api.TTLockApi.get_lock_passage_mode_config",
+            mock_get_passage_mode,
+        )
+
+    return create_mock_responses
