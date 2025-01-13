@@ -207,7 +207,6 @@ class LockRecord(BaseModel):
 
     id: int = Field(None, alias="recordId")
     lock_id: int = Field(None, alias="lockId")
-    record_type_from_lock: int = Field(None, alias="recordTypeFromLock")
     record_type: RecordType = Field(None, alias="recordType")
     success: bool = Field(...)
     username: Optional[str] = Field(None)

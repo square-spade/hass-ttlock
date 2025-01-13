@@ -255,7 +255,6 @@ class Services:
                     "id": record.id,
                     "lock_id": record.lock_id,
                     "record_type": record.record_type.name,
-                    "record_type_from_lock": record.record_type_from_lock,
                     "success": record.success,
                     "username": record.username,
                     "keyboard_pwd": record.keyboard_pwd,
