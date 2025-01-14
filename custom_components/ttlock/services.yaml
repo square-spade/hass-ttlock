@@ -116,6 +116,7 @@ cleanup_passcodes:
     entity:
       integration: ttlock
       domain: lock
+
 list_passcodes:
   name: List passcodes
   description: Lists all passcodes for the selected lock, including their names, codes, and validity periods.
@@ -123,6 +124,7 @@ list_passcodes:
     entity:
       integration: ttlock
       domain: lock
+
 list_records:
   name: List lock records
   description: Lists operation records for the selected lock.
@@ -161,3 +163,28 @@ list_records:
         number:
           min: 1
           max: 10
+
+configure_autolock:
+  name: Configure Autolock
+  description: Configure Autolock of the device.
+  target:
+    entity:
+      integration: ttlock
+      domain: lock
+  fields:
+    enabled:
+      name: Enabled
+      description: Should the Autolock feature for the lock be enabled?
+      required: true
+      default: false
+      selector:
+        boolean:
+    seconds:
+      name: Seconds
+      description: How many seconds before the lock should Autolock? (0-60 secs | default 10)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 60
+          unit_of_measurement: secs

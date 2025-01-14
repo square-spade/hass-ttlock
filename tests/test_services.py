@@ -7,6 +7,7 @@ import pytest
 from custom_components.ttlock.const import (
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
+    SVC_CONFIG_AUTOLOCK,
     SVC_CREATE_PASSCODE,
     SVC_LIST_PASSCODES,
     SVC_LIST_RECORDS,
@@ -21,6 +22,44 @@ from custom_components.ttlock.models import (
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt
+
+
+class Test_configure_autolock:
+    @pytest.mark.parametrize(
+        ("params", "seconds_expected"),
+        [
+            ({"enabled": False}, 0),
+            ({"enabled": False, "seconds": 30}, 0),
+            ({"enabled": True}, 10),
+            ({"enabled": True, "seconds": 30}, 30),
+        ],
+    )
+    async def test_configure(
+        self,
+        hass: HomeAssistant,
+        component_setup,
+        mock_api_responses,
+        params,
+        seconds_expected,
+    ):
+        """Test creating a passcode."""
+        mock_api_responses("default")
+        coordinator = await component_setup()
+        entity_id = coordinator.entities[0].entity_id
+
+        with patch(
+            "custom_components.ttlock.api.TTLockApi.set_auto_lock", return_value=True
+        ) as mock:
+            await hass.services.async_call(
+                DOMAIN,
+                SVC_CONFIG_AUTOLOCK,
+                {
+                    ATTR_ENTITY_ID: entity_id,
+                    **params,
+                },
+            )
+            await hass.async_block_till_done()
+            assert mock.call_args_list == [call(coordinator.lock_id, seconds_expected)]
 
 
 class Test_list_passcodes:

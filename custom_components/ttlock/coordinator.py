@@ -17,9 +17,18 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, PassageModeConfig, State, WebhookEvent
+from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class SensorData:
+    """Internal state of the optional door sensor."""
+
+    opened: bool | None = None
+    battery: int | None = None
+    last_fetched: datetime | None = None
 
 
 @dataclass
@@ -32,13 +41,14 @@ class LockState:
     battery_level: int | None = None
     hardware_version: str | None = None
     firmware_version: str | None = None
-    features: Features | None = None
+    features: Features = Features.from_feature_value(None)
     locked: bool | None = None
     action_pending: bool = False
     last_user: str | None = None
     last_reason: str | None = None
-
-    auto_lock_seconds: int = -1
+    lock_sound: bool | None = None
+    sensor: SensorData | None = None
+    auto_lock_seconds: int | None = None
     passage_mode_config: PassageModeConfig | None = None
 
     def passage_mode_active(self, current_date: datetime = dt.now()) -> bool:
@@ -62,7 +72,7 @@ class LockState:
 
     def auto_lock_delay(self, current_date: datetime) -> int | None:
         """Return the auto-lock delay in seconds, or None if auto-lock is currently disabled."""
-        if self.auto_lock_seconds <= 0:
+        if self.auto_lock_seconds is None or self.auto_lock_seconds <= 0:
             return None
 
         if self.passage_mode_active(current_date):
@@ -135,14 +145,35 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             new_data.hardware_version = details.hardwareRevision
             new_data.firmware_version = details.firmwareRevision
 
+            if Features.door_sensor in new_data.features:
+                # make sure we have a placeholder for sensor state if the lock supports it
+                if new_data.sensor is None:
+                    new_data.sensor = SensorData()
+
+                # only fetch sensor metadata once a day
+                if (
+                    new_data.sensor.last_fetched is None
+                    or new_data.sensor.last_fetched < dt.now() - timedelta(days=1)
+                ):
+                    sensor = await self.api.get_sensor(self.lock_id)
+
+                    new_data.sensor.battery = sensor.battery_level
+                    new_data.sensor.last_fetched = dt.now()
+            else:
+                new_data.sensor = None
+
             if new_data.locked is None:
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
+                    if new_data.sensor:
+                        new_data.sensor.opened = state.opened == SensorState.opened
                 except Exception:
                     pass
 
             new_data.auto_lock_seconds = details.autoLockTime
+            new_data.lock_sound = bool(details.lockSound)
+
             new_data.passage_mode_config = await self.api.get_lock_passage_mode_config(
                 self.lock_id
             )
@@ -179,6 +210,15 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
 
+        if new_data.sensor and event.sensorState:
+            if event.sensorState.opened == SensorState.opened:
+                new_data.sensor.opened = True
+            if event.sensorState.opened == SensorState.closed:
+                new_data.sensor.opened = False
+                new_data.locked = True
+                new_data.last_reason = "Door Closed"
+
+                _LOGGER.debug("Assuming auto-locked via sensor")
         self.async_set_updated_data(new_data)
 
     def _handle_auto_lock(self, lock_ts: datetime, server_ts: datetime):
@@ -189,6 +229,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
         if auto_lock_delay is None:
             _LOGGER.debug("Auto-lock is disabled")
+
             return
 
         async def _auto_locked(seconds: int, offset: float = 0):
@@ -254,3 +295,19 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
             res = await self.api.unlock(self.lock_id)
             if res:
                 self.data.locked = False
+
+    async def set_auto_lock(self, on: bool) -> None:
+        """Turn on/off Autolock."""
+        seconds = 10 if on else 0
+        res = await self.api.set_auto_lock(self.lock_id, seconds)
+        if res:
+            self.data.auto_lock_seconds = seconds
+            self.async_update_listeners()
+
+    async def set_lock_sound(self, on: bool) -> None:
+        """Turn on/off lock sound."""
+        value = 1 if on else 2
+        res = await self.api.set_lock_sound(self.lock_id, value)
+        if res:
+            self.data.lock_sound = on
+            self.async_update_listeners()

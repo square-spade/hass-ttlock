@@ -19,10 +19,12 @@ from .const import (
     CONF_ALL_DAY,
     CONF_AUTO_UNLOCK,
     CONF_END_TIME,
+    CONF_SECONDS,
     CONF_START_TIME,
     CONF_WEEK_DAYS,
     DOMAIN,
     SVC_CLEANUP_PASSCODES,
+    SVC_CONFIG_AUTOLOCK,
     SVC_CONFIG_PASSAGE_MODE,
     SVC_CREATE_PASSCODE,
     SVC_LIST_PASSCODES,
@@ -130,6 +132,21 @@ class Services:
             supports_response=SupportsResponse.ONLY,
         )
 
+        self.hass.services.register(
+            DOMAIN,
+            SVC_CONFIG_AUTOLOCK,
+            self.handle_configure_autolock,
+            vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                    vol.Required(CONF_ENABLED): cv.boolean,
+                    vol.Optional(CONF_SECONDS): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=60)
+                    ),
+                }
+            ),
+        )
+
     def _get_coordinators(self, call: ServiceCall) -> dict[str, LockUpdateCoordinator]:
         """Get coordinators for the requested entities.
 
@@ -230,6 +247,19 @@ class Services:
                 removed[entity_id] = removed_for_lock
 
         return {"removed": removed}
+
+    async def handle_configure_autolock(self, call: ServiceCall):
+        """Set the autolock seconds."""
+
+        if call.data.get(CONF_ENABLED):
+            seconds = call.data.get(CONF_SECONDS) or 10
+        else:
+            seconds = 0
+
+        for coordinator in self._get_coordinators(call).values():
+            if await coordinator.api.set_auto_lock(coordinator.lock_id, seconds):
+                coordinator.data.auto_lock_seconds = seconds
+                coordinator.async_update_listeners()
 
     async def handle_list_records(self, call: ServiceCall) -> ServiceResponse:
         """List records for the selected locks."""

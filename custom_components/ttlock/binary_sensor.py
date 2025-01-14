@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -25,9 +28,28 @@ async def async_setup_entry(
         [
             entity
             for coordinator in lock_coordinators(hass, entry)
-            for entity in (PassageMode(coordinator),)
+            for entity in (
+                PassageMode(coordinator),
+                Sensor(coordinator) if coordinator.data.sensor else None,
+            )
+            if entity is not None
         ]
     )
+
+
+class Sensor(BaseLockEntity, BinarySensorEntity):
+    """Current sensor state."""
+
+    _attr_device_class = BinarySensorDeviceClass.DOOR
+
+    def _update_from_coordinator(self) -> None:
+        """Fetch state of device."""
+        self._attr_name = f"{self.coordinator.data.name} Sensor"
+        self._attr_is_on = (
+            bool(self.coordinator.data.sensor.opened)
+            if self.coordinator.data.sensor
+            else False
+        )
 
 
 class PassageMode(BaseLockEntity, BinarySensorEntity):

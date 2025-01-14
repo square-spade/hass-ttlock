@@ -43,6 +43,19 @@ BASIC_LOCK_DETAILS = {
     },
     "sensitivity": -1,
 }
+LOCK_DETAILS_WITH_SENSOR = {
+    **BASIC_LOCK_DETAILS,  # type: ignore
+    "featureValue": "F44354CF5F3",
+}
+
+SENSOR_DETAILS = {
+    "doorSensorId": 2323,
+    "name": "Door sensor for front door",
+    "electricQuantity": 85,
+    "version": "1.0.0.210903",
+    "mac": "63:42:BB:C2:61:A9",
+    "number": "DS2_a961c2",
+}
 
 LOCK_STATE_LOCKED = {"state": 0, "electricQuantity": 90, "lockTime": 1621459200000}
 
@@ -64,24 +77,38 @@ PASSAGE_MODE_ALL_DAY_WEEKDAYS = {
     "passageMode": 1,
 }
 
-WEBHOOK_LOCK_10AM_UTC = {
+_WEBHOOK_BASE = {
     "lockId": BASIC_LOCK_DETAILS["lockId"],
     "lockMac": BASIC_LOCK_DETAILS["lockMac"],
     "electricQuantity": 40,
     "serverDate": 1682244497000,
     "lockDate": 1682244497000,
+}
+
+WEBHOOK_LOCK_10AM_UTC = {
+    **_WEBHOOK_BASE,  # type: ignore
     "recordType": 47,
     "username": "test",
     "success": 1,
 }
 
 WEBHOOK_UNLOCK_10AM_UTC = {
-    "lockId": BASIC_LOCK_DETAILS["lockId"],
-    "lockMac": BASIC_LOCK_DETAILS["lockMac"],
-    "electricQuantity": 40,
-    "serverDate": 1682244497000,
-    "lockDate": 1682244497000,
+    **_WEBHOOK_BASE,  # type: ignore
     "recordType": 7,
+    "username": "test",
+    "success": 1,
+}
+
+WEBHOOK_SENSOR_OPEN = {
+    **_WEBHOOK_BASE,  # type: ignore
+    "recordType": 31,
+    "username": "test",
+    "success": 1,
+}
+
+WEBHOOK_SENSOR_CLOSE = {
+    **_WEBHOOK_BASE,  # type: ignore
+    "recordType": 30,
     "username": "test",
     "success": 1,
 }

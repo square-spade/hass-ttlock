@@ -16,6 +16,7 @@ from custom_components.ttlock.models import (
     LockRecord,
     LockState,
     PassageModeConfig,
+    Sensor,
 )
 from homeassistant.components.application_credentials import (
     ClientCredential,
@@ -26,9 +27,11 @@ from homeassistant.setup import async_setup_component
 
 from .const import (
     BASIC_LOCK_DETAILS,
+    LOCK_DETAILS_WITH_SENSOR,
     LOCK_STATE_LOCKED,
     LOCK_STATE_UNLOCKED,
     PASSAGE_MODE_6_TO_6_7_DAYS,
+    SENSOR_DETAILS,
 )
 
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -109,7 +112,8 @@ class MockApiData(NamedTuple):
 
     lock: Lock
     state: LockState
-    passage_mode: PassageModeConfig | None
+    sensor: Sensor | None = None
+    passage_mode: PassageModeConfig | None = None
     records: list[LockRecord] = []
 
 
@@ -123,19 +127,22 @@ def mock_data_factory():
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
                 passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
-                records=[],
+            ),
+            "with_sensor": MockApiData(
+                lock=Lock.parse_obj(LOCK_DETAILS_WITH_SENSOR),
+                sensor=Sensor.parse_obj(SENSOR_DETAILS),
+                state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
+                passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
             ),
             "locked": MockApiData(
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_LOCKED),
                 passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
-                records=[],
             ),
             "no_passage_mode": MockApiData(
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
                 passage_mode=None,
-                records=[],
             ),
         }
         return scenarios[scenario]
@@ -156,6 +163,9 @@ def mock_api_responses(monkeypatch, mock_data_factory):
         async def mock_get_lock(*args, **kwargs):
             return mock_data.lock
 
+        async def mock_get_sensor(*args, **kwargs):
+            return mock_data.sensor
+
         async def mock_get_lock_state(*args, **kwargs):
             return mock_data.state
 
@@ -170,6 +180,9 @@ def mock_api_responses(monkeypatch, mock_data_factory):
         )
         monkeypatch.setattr(
             "custom_components.ttlock.api.TTLockApi.get_lock", mock_get_lock
+        )
+        monkeypatch.setattr(
+            "custom_components.ttlock.api.TTLockApi.get_sensor", mock_get_sensor
         )
         monkeypatch.setattr(
             "custom_components.ttlock.api.TTLockApi.get_lock_state", mock_get_lock_state

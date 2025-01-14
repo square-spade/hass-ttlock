@@ -2,34 +2,24 @@
 
 
 import asyncio
+from datetime import timedelta
 
 import dateparser
 import pytest
 
 from custom_components.ttlock.coordinator import LockState, LockUpdateCoordinator
 from custom_components.ttlock.models import PassageModeConfig, WebhookEvent
+from homeassistant.util import dt
 
 from .const import (
     BASIC_LOCK_DETAILS,
     PASSAGE_MODE_6_TO_6_7_DAYS,
     PASSAGE_MODE_ALL_DAY_WEEKDAYS,
     WEBHOOK_LOCK_10AM_UTC,
+    WEBHOOK_SENSOR_CLOSE,
+    WEBHOOK_SENSOR_OPEN,
     WEBHOOK_UNLOCK_10AM_UTC,
 )
-
-
-async def test_coordinator_loads_data(
-    coordinator: LockUpdateCoordinator, mock_api_responses
-):
-    mock_api_responses("default")
-    await coordinator.async_refresh()
-
-    assert coordinator.data.name == BASIC_LOCK_DETAILS["lockAlias"]
-    assert coordinator.data.locked is False
-    assert coordinator.data.action_pending is False
-    assert coordinator.data.last_user is None
-    assert coordinator.data.last_reason is None
-    assert coordinator.data.features is not None
 
 
 @pytest.fixture(params=[{"auto_lock_seconds": 30}])
@@ -131,6 +121,46 @@ class TestLockState:
 
 
 class TestLockUpdateCoordinator:
+    class TestAsyncRefresh:
+        async def test_coordinator_loads_data(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("default")
+            await coordinator.async_refresh()
+
+            assert coordinator.data.name == BASIC_LOCK_DETAILS["lockAlias"]
+            assert coordinator.data.locked is False
+            assert coordinator.data.sensor is None
+            assert coordinator.data.action_pending is False
+            assert coordinator.data.last_user is None
+            assert coordinator.data.last_reason is None
+            assert coordinator.data.features is not None
+
+        async def test_coordinator_loads_sensor_data(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("with_sensor")
+            await coordinator.async_refresh()
+
+            assert coordinator.data.sensor.opened is False
+            assert coordinator.data.sensor.battery == 85
+            assert coordinator.data.sensor.last_fetched > dt.now() - timedelta(
+                seconds=3
+            )
+
+        async def test_sensor_data_only_fetched_once(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("with_sensor")
+
+            await coordinator.async_refresh()
+            t0 = coordinator.data.sensor.last_fetched
+
+            await coordinator.async_refresh()
+            t1 = coordinator.data.sensor.last_fetched
+
+            assert t0 == t1
+
     class TestProcessWebhookData:
         async def test_lock_works(
             self, coordinator: LockUpdateCoordinator, mock_api_responses
@@ -188,3 +218,36 @@ class TestLockUpdateCoordinator:
             assert coordinator.data.locked is True
             assert coordinator.data.last_user == "test"
             assert coordinator.data.last_reason == "Auto Lock"
+
+        async def test_open_works(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("with_sensor")
+            await coordinator.async_refresh()
+
+            coordinator.data.locked = True
+            coordinator.data.auto_lock_seconds = -1
+            coordinator.data.sensor.opened is False
+
+            event = WebhookEvent.parse_obj(WEBHOOK_SENSOR_OPEN)
+            coordinator._process_webhook_data(event)
+
+            assert coordinator.data.locked is True
+            assert coordinator.data.sensor.opened is True
+
+        async def test_close_works(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("with_sensor")
+            await coordinator.async_refresh()
+
+            coordinator.data.locked = False
+            coordinator.data.auto_lock_seconds = -1
+            coordinator.data.sensor.opened is True
+
+            event = WebhookEvent.parse_obj(WEBHOOK_SENSOR_CLOSE)
+            coordinator._process_webhook_data(event)
+
+            assert coordinator.data.locked is True
+            assert coordinator.data.sensor.opened is False
+            assert coordinator.data.last_reason == "Door Closed"
