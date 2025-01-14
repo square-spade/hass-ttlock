@@ -160,11 +160,13 @@ class TTLockApi:
 
     async def get_sensor(self, lock_id: int) -> Sensor | None:
         """Get the Sensor."""
-        res = await self.get("doorSensor/query", lockId=lock_id)
-        if "errcode" in res and res["errcode"] != 0:
-            _LOGGER.error("Error setting up sensor", lock_id, res["errmsg"])
+
+        try:
+            res = await self.get("doorSensor/query", lockId=lock_id)
+            return Sensor.parse_obj(res)
+        except RequestFailed:
+            # Janky but the API doesn't return different errors if the sensor is missing or there's some other problem
             return None
-        return Sensor.parse_obj(res)
 
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
