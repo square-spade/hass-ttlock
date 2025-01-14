@@ -11,7 +11,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.ttlock.api import TTLockApi
 from custom_components.ttlock.const import DOMAIN, TT_LOCKS
 from custom_components.ttlock.coordinator import LockUpdateCoordinator
-from custom_components.ttlock.models import Lock, LockState, PassageModeConfig
+from custom_components.ttlock.models import (
+    Lock,
+    LockRecord,
+    LockState,
+    PassageModeConfig,
+)
 from homeassistant.components.application_credentials import (
     ClientCredential,
     async_import_client_credential,
@@ -105,6 +110,7 @@ class MockApiData(NamedTuple):
     lock: Lock
     state: LockState
     passage_mode: PassageModeConfig | None
+    records: list[LockRecord] = []
 
 
 @pytest.fixture
@@ -117,16 +123,19 @@ def mock_data_factory():
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
                 passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
+                records=[],
             ),
             "locked": MockApiData(
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_LOCKED),
                 passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
+                records=[],
             ),
             "no_passage_mode": MockApiData(
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
                 passage_mode=None,
+                records=[],
             ),
         }
         return scenarios[scenario]
@@ -153,6 +162,9 @@ def mock_api_responses(monkeypatch, mock_data_factory):
         async def mock_get_passage_mode(*args, **kwargs):
             return mock_data.passage_mode
 
+        async def mock_get_lock_records(*args, **kwargs):
+            return mock_data.records
+
         monkeypatch.setattr(
             "custom_components.ttlock.api.TTLockApi.get_locks", mock_get_locks
         )
@@ -165,6 +177,10 @@ def mock_api_responses(monkeypatch, mock_data_factory):
         monkeypatch.setattr(
             "custom_components.ttlock.api.TTLockApi.get_lock_passage_mode_config",
             mock_get_passage_mode,
+        )
+        monkeypatch.setattr(
+            "custom_components.ttlock.api.TTLockApi.get_lock_records",
+            mock_get_lock_records,
         )
 
     return create_mock_responses

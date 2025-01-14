@@ -26,11 +26,23 @@ from .const import (
     SVC_CONFIG_PASSAGE_MODE,
     SVC_CREATE_PASSCODE,
     SVC_LIST_PASSCODES,
+    SVC_LIST_RECORDS,
 )
 from .coordinator import LockUpdateCoordinator, coordinator_for
 from .models import AddPasscodeConfig, OnOff, PassageModeConfig
 
 _LOGGER = logging.getLogger(__name__)
+
+_LIST_RECORDS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("start_date"): cv.datetime,
+        vol.Optional("end_date"): cv.datetime,
+        vol.Optional("page_size", default=50): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=200)
+        ),
+        vol.Optional("page_no", default=1): vol.All(vol.Coerce(int), vol.Range(min=1)),
+    }
+)
 
 
 class Services:
@@ -94,6 +106,25 @@ class Services:
             schema=vol.Schema(
                 {
                     vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                }
+            ),
+            supports_response=SupportsResponse.ONLY,
+        )
+        self.hass.services.register(
+            DOMAIN,
+            SVC_LIST_RECORDS,
+            self.handle_list_records,
+            schema=vol.Schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                    vol.Optional("start_date"): cv.datetime,
+                    vol.Optional("end_date"): cv.datetime,
+                    vol.Optional("page_size", default=50): vol.All(
+                        vol.Coerce(int), vol.Range(min=1, max=200)
+                    ),
+                    vol.Optional("page_no", default=1): vol.All(
+                        vol.Coerce(int), vol.Range(min=1)
+                    ),
                 }
             ),
             supports_response=SupportsResponse.ONLY,
@@ -199,3 +230,38 @@ class Services:
                 removed[entity_id] = removed_for_lock
 
         return {"removed": removed}
+
+    async def handle_list_records(self, call: ServiceCall) -> ServiceResponse:
+        """List records for the selected locks."""
+        records = {}
+        params = {}
+
+        # Convert datetime parameters to millisecond timestamps if provided
+        if start_date := call.data.get("start_date"):
+            params["start_date"] = int(as_utc(start_date).timestamp() * 1000)
+        if end_date := call.data.get("end_date"):
+            params["end_date"] = int(as_utc(end_date).timestamp() * 1000)
+
+        # Get pagination values from call data with defaults
+        params["page_no"] = call.data.get("page_no", 1)
+        params["page_size"] = min(call.data.get("page_size", 50), 200)
+
+        for entity_id, coordinator in self._get_coordinators(call).items():
+            lock_records = await coordinator.api.get_lock_records(
+                coordinator.lock_id, **params
+            )
+            records[entity_id] = [
+                {
+                    "id": record.id,
+                    "lock_id": record.lock_id,
+                    "record_type": record.record_type.name,
+                    "success": record.success,
+                    "username": record.username,
+                    "keyboard_pwd": record.keyboard_pwd,
+                    "lock_date": record.lock_date,
+                    "server_date": record.server_date,
+                }
+                for record in lock_records
+            ]
+
+        return {"records": records}
