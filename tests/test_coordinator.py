@@ -148,6 +148,17 @@ class TestLockUpdateCoordinator:
                 seconds=3
             )
 
+        async def test_coordinator_handles_missing_sensor(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("sensor_not_installed")
+            await coordinator.async_refresh()
+
+            assert coordinator.data.sensor.present is False
+            assert coordinator.data.sensor.last_fetched > dt.now() - timedelta(
+                seconds=3
+            )
+
         async def test_sensor_data_only_fetched_once(
             self, coordinator: LockUpdateCoordinator, mock_api_responses
         ):

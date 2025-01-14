@@ -158,12 +158,12 @@ class TTLockApi:
         res = await self.get("lock/detail", lockId=lock_id)
         return Lock.parse_obj(res)
 
-    async def get_sensor(self, lock_id: int) -> Sensor:
+    async def get_sensor(self, lock_id: int) -> Sensor | None:
         """Get the Sensor."""
         res = await self.get("doorSensor/query", lockId=lock_id)
         if "errcode" in res and res["errcode"] != 0:
             _LOGGER.error("Error setting up sensor", lock_id, res["errmsg"])
-            pass
+            return None
         return Sensor.parse_obj(res)
 
     async def get_lock_state(self, lock_id: int) -> LockState:
