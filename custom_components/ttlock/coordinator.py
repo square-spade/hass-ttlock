@@ -17,7 +17,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, OnOff, PassageModeConfig, SensorState, State, WebhookEvent
+from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -152,8 +152,8 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
                 # only fetch sensor metadata once a day
                 if (
-                    new_data.sensor.last_fetched
-                    and new_data.sensor.last_fetched > dt.now() - timedelta(days=1)
+                    new_data.sensor.last_fetched is None
+                    or new_data.sensor.last_fetched < dt.now() - timedelta(days=1)
                 ):
                     sensor = await self.api.get_sensor(self.lock_id)
 
