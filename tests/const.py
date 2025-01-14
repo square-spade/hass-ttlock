@@ -43,6 +43,19 @@ BASIC_LOCK_DETAILS = {
     },
     "sensitivity": -1,
 }
+LOCK_DETAILS_WITH_SENSOR = {
+    **BASIC_LOCK_DETAILS,  # type: ignore
+    "featureValue": "F44354CF5F3",
+}
+
+SENSOR_DETAILS = {
+    "doorSensorId": 2323,
+    "name": "Door sensor for front door",
+    "electricQuantity": 85,
+    "version": "1.0.0.210903",
+    "mac": "63:42:BB:C2:61:A9",
+    "number": "DS2_a961c2",
+}
 
 LOCK_STATE_LOCKED = {"state": 0, "electricQuantity": 90, "lockTime": 1621459200000}
 

@@ -6,7 +6,11 @@ import asyncio
 import dateparser
 import pytest
 
-from custom_components.ttlock.coordinator import LockState, LockUpdateCoordinator
+from custom_components.ttlock.coordinator import (
+    LockState,
+    LockUpdateCoordinator,
+    SensorData,
+)
 from custom_components.ttlock.models import PassageModeConfig, WebhookEvent
 
 from .const import (
@@ -21,12 +25,12 @@ from .const import (
 async def test_coordinator_loads_data(
     coordinator: LockUpdateCoordinator, mock_api_responses
 ):
-    mock_api_responses("default")
+    mock_api_responses("with_sensor")
     await coordinator.async_refresh()
 
     assert coordinator.data.name == BASIC_LOCK_DETAILS["lockAlias"]
     assert coordinator.data.locked is False
-    assert coordinator.data.sensor is None
+    assert coordinator.data.sensor == SensorData(opened=False)
     assert coordinator.data.action_pending is False
     assert coordinator.data.last_user is None
     assert coordinator.data.last_reason is None
