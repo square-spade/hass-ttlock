@@ -16,6 +16,8 @@ from .const import (
     PASSAGE_MODE_6_TO_6_7_DAYS,
     PASSAGE_MODE_ALL_DAY_WEEKDAYS,
     WEBHOOK_LOCK_10AM_UTC,
+    WEBHOOK_SENSOR_CLOSE,
+    WEBHOOK_SENSOR_OPEN,
     WEBHOOK_UNLOCK_10AM_UTC,
 )
 
@@ -216,3 +218,36 @@ class TestLockUpdateCoordinator:
             assert coordinator.data.locked is True
             assert coordinator.data.last_user == "test"
             assert coordinator.data.last_reason == "Auto Lock"
+
+        async def test_open_works(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("with_sensor")
+            await coordinator.async_refresh()
+
+            coordinator.data.locked = True
+            coordinator.data.auto_lock_seconds = -1
+            coordinator.data.sensor.opened is False
+
+            event = WebhookEvent.parse_obj(WEBHOOK_SENSOR_OPEN)
+            coordinator._process_webhook_data(event)
+
+            assert coordinator.data.locked is True
+            assert coordinator.data.sensor.opened is True
+
+        async def test_close_works(
+            self, coordinator: LockUpdateCoordinator, mock_api_responses
+        ):
+            mock_api_responses("with_sensor")
+            await coordinator.async_refresh()
+
+            coordinator.data.locked = False
+            coordinator.data.auto_lock_seconds = -1
+            coordinator.data.sensor.opened is True
+
+            event = WebhookEvent.parse_obj(WEBHOOK_SENSOR_CLOSE)
+            coordinator._process_webhook_data(event)
+
+            assert coordinator.data.locked is True
+            assert coordinator.data.sensor.opened is False
+            assert coordinator.data.last_reason == "Door Closed"

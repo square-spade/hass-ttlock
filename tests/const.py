@@ -77,24 +77,38 @@ PASSAGE_MODE_ALL_DAY_WEEKDAYS = {
     "passageMode": 1,
 }
 
-WEBHOOK_LOCK_10AM_UTC = {
+_WEBHOOK_BASE = {
     "lockId": BASIC_LOCK_DETAILS["lockId"],
     "lockMac": BASIC_LOCK_DETAILS["lockMac"],
     "electricQuantity": 40,
     "serverDate": 1682244497000,
     "lockDate": 1682244497000,
+}
+
+WEBHOOK_LOCK_10AM_UTC = {
+    **_WEBHOOK_BASE,  # type: ignore
     "recordType": 47,
     "username": "test",
     "success": 1,
 }
 
 WEBHOOK_UNLOCK_10AM_UTC = {
-    "lockId": BASIC_LOCK_DETAILS["lockId"],
-    "lockMac": BASIC_LOCK_DETAILS["lockMac"],
-    "electricQuantity": 40,
-    "serverDate": 1682244497000,
-    "lockDate": 1682244497000,
+    **_WEBHOOK_BASE,  # type: ignore
     "recordType": 7,
+    "username": "test",
+    "success": 1,
+}
+
+WEBHOOK_SENSOR_OPEN = {
+    **_WEBHOOK_BASE,  # type: ignore
+    "recordType": 31,
+    "username": "test",
+    "success": 1,
+}
+
+WEBHOOK_SENSOR_CLOSE = {
+    **_WEBHOOK_BASE,  # type: ignore
+    "recordType": 30,
     "username": "test",
     "success": 1,
 }
