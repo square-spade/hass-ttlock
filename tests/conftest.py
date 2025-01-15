@@ -132,7 +132,10 @@ def mock_data_factory():
                 lock=Lock.parse_obj(LOCK_DETAILS_WITH_SENSOR),
                 sensor=Sensor.parse_obj(SENSOR_DETAILS),
                 state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
-                passage_mode=PassageModeConfig.parse_obj(PASSAGE_MODE_6_TO_6_7_DAYS),
+            ),
+            "sensor_not_installed": MockApiData(
+                lock=Lock.parse_obj(LOCK_DETAILS_WITH_SENSOR),
+                state=LockState.parse_obj(LOCK_STATE_UNLOCKED),
             ),
             "locked": MockApiData(
                 lock=Lock.parse_obj(BASIC_LOCK_DETAILS),

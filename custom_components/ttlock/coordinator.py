@@ -30,6 +30,11 @@ class SensorData:
     battery: int | None = None
     last_fetched: datetime | None = None
 
+    @property
+    def present(self) -> bool:
+        """To indicate if a sensor is installed."""
+        return self.battery is not None
+
 
 @dataclass
 class LockState:
@@ -156,9 +161,9 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                     or new_data.sensor.last_fetched < dt.now() - timedelta(days=1)
                 ):
                     sensor = await self.api.get_sensor(self.lock_id)
-
-                    new_data.sensor.battery = sensor.battery_level
                     new_data.sensor.last_fetched = dt.now()
+                    if sensor:
+                        new_data.sensor.battery = sensor.battery_level
             else:
                 new_data.sensor = None
 
@@ -166,7 +171,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
-                    if new_data.sensor:
+                    if new_data.sensor and new_data.sensor.present:
                         new_data.sensor.opened = state.opened == SensorState.opened
                 except Exception:
                     pass
@@ -210,7 +215,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
 
-        if new_data.sensor and event.sensorState:
+        if new_data.sensor and new_data.sensor.present and event.sensorState:
             if event.sensorState.opened == SensorState.opened:
                 new_data.sensor.opened = True
             if event.sensorState.opened == SensorState.closed:
