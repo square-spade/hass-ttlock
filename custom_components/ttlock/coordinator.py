@@ -7,6 +7,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 import logging
+from typing import TypeGuard
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -84,6 +85,11 @@ class LockState:
             return None
 
         return self.auto_lock_seconds
+
+
+def sensor_present(instance: SensorData | None) -> TypeGuard[SensorData]:
+    """Check if a sensor is present."""
+    return instance is not None and instance.present
 
 
 @contextmanager
@@ -171,7 +177,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
-                    if new_data.sensor and new_data.sensor.present:
+                    if sensor_present(new_data.sensor):
                         new_data.sensor.opened = state.opened == SensorState.opened
                 except Exception:
                     pass
