@@ -13,13 +13,14 @@ from .const import DOMAIN, TT_LOCKS
 from .models import BaseModel
 
 TO_REDACT = {
-    "token",
+    "auth_implementation" "token",
     "lockKey",
     "aesKeyStr",
     "adminPwd",
     "deletePwd",
     "noKeyPwd",
     "lockData",
+    "webhook_id",
     "webhook_url",
 }
 
