@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .coordinator import lock_coordinators
+from .coordinator import lock_coordinators, sensor_present
 from .entity import BaseLockEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +31,9 @@ async def async_setup_entry(
                 LockBattery(coordinator),
                 LockOperator(coordinator),
                 LockTrigger(coordinator),
-                SensorBattery(coordinator) if coordinator.data.sensor else None,
+                SensorBattery(coordinator)
+                if sensor_present(coordinator.data.sensor)
+                else None,
             )
             if entity is not None
         ]

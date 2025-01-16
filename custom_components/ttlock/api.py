@@ -18,6 +18,7 @@ from .models import (
     AddPasscodeConfig,
     Features,
     Lock,
+    LockRecord,
     LockState,
     PassageModeConfig,
     Passcode,
@@ -157,13 +158,15 @@ class TTLockApi:
         res = await self.get("lock/detail", lockId=lock_id)
         return Lock.parse_obj(res)
 
-    async def get_sensor(self, lock_id: int) -> Sensor:
+    async def get_sensor(self, lock_id: int) -> Sensor | None:
         """Get the Sensor."""
-        res = await self.get("doorSensor/query", lockId=lock_id)
-        if "errcode" in res and res["errcode"] != 0:
-            _LOGGER.error("Error setting up sensor", lock_id, res["errmsg"])
-            pass
-        return Sensor.parse_obj(res)
+
+        try:
+            res = await self.get("doorSensor/query", lockId=lock_id)
+            return Sensor.parse_obj(res)
+        except RequestFailed:
+            # Janky but the API doesn't return different errors if the sensor is missing or there's some other problem
+            return None
 
     async def get_lock_state(self, lock_id: int) -> LockState:
         """Get the state of a lock."""
@@ -314,3 +317,29 @@ class TTLockApi:
             return False
 
         return True
+
+    async def get_lock_records(
+        self,
+        lock_id: int,
+        start_date: int | None = None,
+        end_date: int | None = None,
+        page_no: int = 1,
+        page_size: int = 20,
+    ) -> list[LockRecord]:
+        """Get the operation records for a lock."""
+        params = {
+            "lockId": lock_id,
+            "pageNo": page_no,
+            "pageSize": min(page_size, 200),
+            "date": str(round(time.time() * 1000)),
+        }
+
+        if start_date is not None:
+            params["startDate"] = start_date
+        if end_date is not None:
+            params["endDate"] = end_date
+
+        res = await self.get("lockRecord/list", **params)
+
+        # Serialize each record to ensure datetime objects are handled
+        return [LockRecord.parse_obj(record) for record in res["list"]]

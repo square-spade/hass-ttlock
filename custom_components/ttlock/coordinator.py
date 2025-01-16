@@ -4,9 +4,10 @@ from __future__ import annotations
 import asyncio
 from contextlib import contextmanager
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
+from typing import TypeGuard
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -17,7 +18,7 @@ from homeassistant.util import dt
 
 from .api import TTLockApi
 from .const import DOMAIN, SIGNAL_NEW_DATA, TT_LOCKS
-from .models import Features, OnOff, PassageModeConfig, SensorState, State, WebhookEvent
+from .models import Features, PassageModeConfig, SensorState, State, WebhookEvent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,6 +30,11 @@ class SensorData:
     opened: bool | None = None
     battery: int | None = None
     last_fetched: datetime | None = None
+
+    @property
+    def present(self) -> bool:
+        """To indicate if a sensor is installed."""
+        return self.battery is not None
 
 
 @dataclass
@@ -79,6 +85,11 @@ class LockState:
             return None
 
         return self.auto_lock_seconds
+
+
+def sensor_present(instance: SensorData | None) -> TypeGuard[SensorData]:
+    """Check if a sensor is present."""
+    return instance is not None and instance.present
 
 
 @contextmanager
@@ -152,13 +163,13 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
 
                 # only fetch sensor metadata once a day
                 if (
-                    new_data.sensor.last_fetched
-                    and new_data.sensor.last_fetched > dt.now() - timedelta(days=1)
+                    new_data.sensor.last_fetched is None
+                    or new_data.sensor.last_fetched < dt.now() - timedelta(days=1)
                 ):
                     sensor = await self.api.get_sensor(self.lock_id)
-
-                    new_data.sensor.battery = sensor.battery_level
                     new_data.sensor.last_fetched = dt.now()
+                    if sensor:
+                        new_data.sensor.battery = sensor.battery_level
             else:
                 new_data.sensor = None
 
@@ -166,7 +177,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 try:
                     state = await self.api.get_lock_state(self.lock_id)
                     new_data.locked = state.locked == State.locked
-                    if new_data.sensor:
+                    if sensor_present(new_data.sensor):
                         new_data.sensor.opened = state.opened == SensorState.opened
                 except Exception:
                     pass
@@ -210,7 +221,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
                 new_data.last_user = event.user
                 new_data.last_reason = event.event.description
 
-        if new_data.sensor and event.sensorState:
+        if new_data.sensor and new_data.sensor.present and event.sensorState:
             if event.sensorState.opened == SensorState.opened:
                 new_data.sensor.opened = True
             if event.sensorState.opened == SensorState.closed:
@@ -275,7 +286,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         """Serialize for diagnostics."""
         return {
             "unique_id": self.unique_id,
-            "device": asdict(self.data),
+            "device": self.data,
             "entities": [
                 self.hass.states.get(entity.entity_id).as_dict()
                 for entity in self.entities
