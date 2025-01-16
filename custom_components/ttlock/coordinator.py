@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import contextmanager
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
 from typing import TypeGuard
@@ -286,7 +286,7 @@ class LockUpdateCoordinator(DataUpdateCoordinator[LockState]):
         """Serialize for diagnostics."""
         return {
             "unique_id": self.unique_id,
-            "device": asdict(self.data),
+            "device": self.data,
             "entities": [
                 self.hass.states.get(entity.entity_id).as_dict()
                 for entity in self.entities
